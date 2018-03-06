@@ -12,6 +12,7 @@ from lxw import lxw
 from Nessyahu_Tadmor import nt
 from cuw import cuw
 from outflow import outflow
+from inflow import inflow
 from periodic import periodic
 import cProfile
 
@@ -81,8 +82,8 @@ def Advection_high_resolution_schemes():
     
     df = lambda u: np.ones(len(u))
     
-    un = nt(u0, 0.495, dx, 50, f, df, periodic, limiter_function)
-    uc = cuw(u0, 0.495, dx, 20, f, df, periodic)
+    un = nt(u0, 0.495, dx, 200, f, df, periodic, limiter_function)
+    uc = cuw(u0, 0.495, dx, 15, f, df, periodic)
     
     plt.figure()
     plt.plot(xh[2:-2], u0[2:-2])
@@ -91,10 +92,13 @@ def Advection_high_resolution_schemes():
     plt.legend(["Initial", "Nessyahu-Tadmor", "Central upwind"], loc = 1, fontsize = 5)
     plt.savefig("Advection_high_resolution_schemes.pdf")
 
-def BL_solution():
+def BL_solution(method):
     # Flux function
     def f(u):
         return np.divide(np.power(u,2),np.power(u,2) + np.power(1-u,2))
+    
+    def limiter_function(r):
+        return np.maximum(0, np.minimum(2*r, np.minimum((r+1)/2, 2)))
     
     s = np.linspace(0,1,501)
     dfv = max(np.diff(f(s))/np.diff(s))
@@ -107,42 +111,60 @@ def BL_solution():
     u0[xr<0.1]=1.0
     ur = upw(u0, .995, dx, .65, f, df, outflow)
     
-    # Solutions on coarser grids
-    N  = 50
-    dx = 1/N
-    x  = np.arange(-0.5*dx,1+1.5*dx,dx)
-    u0 = 0*x
-    u0[x<0.1]=1.0
+    if method == 'classical':
+        # Solutions on coarser grids
+        N  = 50
+        dx = 1/N
+        x  = np.arange(-0.5*dx,1+1.5*dx,dx)
+        u0 = 0*x
+        u0[x<0.1]=1.0
+        
+        uu = upw(u0, .995, dx, 0.65, f, df, outflow)
+        uf = lxf(u0, .995, dx, 0.65, f, df, outflow)
+        uw = lxw(u0, .995, dx, 0.65, f, df, outflow)
     
-    uu = upw(u0, .995, dx, .65, f, df, outflow)
-    uf = lxf(u0, .995, dx, .65, f, df, outflow)
-    uw = lxw(u0, .995, dx, .65, f, df, outflow)
-    xh = np.arange(-1.5*dx, 1 + 2.5*dx, dx)
-    u0_1 = 0*xh
-    u0_1[x<0.1] = 1
-    uc = cuw(u0_1, 0.495, dx, 20, f, df, outflow)
+        # Plot results
+        plt.figure()
+        plt.plot([1,2,3])
+        plt.subplot(131)
+        plt.plot(xr[1:-1], ur[1:-1])
+        plt.plot(x[1:-1], uu[1:-1], '.', markersize = 3)
+        plt.title("Upwind")
+        plt.subplot(132)
+        plt.plot(xr[1:-1],ur[1:-1])
+        plt.plot(x[1:-1],uf[1:-1],'.', markersize = 3)
+        plt.title("Lax-Friedrichs")
+        plt.subplot(133)
+        plt.plot(xr[1:-1],ur[1:-1])
+        plt.plot(x[1:-1],uw[1:-1],'.', markersize = 3)
+        plt.title("Lax-Wendroff")
+        plt.savefig("solution_classical.pdf")
     
-    plt.figure()
-    plt.plot(xr[1:-1],ur[1:-1])
-    plt.plot(xh[2:-2],uc[2:-2])
-    
-    # Plot results
-    plt.figure()
-    plt.plot([1,2,3])
-    plt.subplot(131)
-    plt.plot(xr[1:-1], ur[1:-1])
-    plt.plot(x[1:-1], uu[1:-1], '.', markersize = 3)
-    plt.title("Upwind")
-    plt.subplot(132)
-    plt.plot(xr[1:-1],ur[1:-1])
-    plt.plot(x[1:-1],uf[1:-1],'.', markersize = 3)
-    plt.title("Lax-Friedrichs")
-    plt.subplot(133)
-    plt.plot(xr[1:-1],ur[1:-1])
-    plt.plot(x[1:-1],uw[1:-1],'.', markersize = 3)
-    plt.title("Lax-Wendroff")
-    plt.savefig("solution.pdf")
-    
+    elif method == 'high':
+        N  = 50
+        dx = 1/N
+        xh = np.arange(-1.5*dx, 1 + 2.5*dx, dx)
+        u0 = 0*xh
+        u0[xh<0.1] = 1
+        
+        
+        uc = cuw(u0, 0.495, dx, 0.65, f, df, inflow)
+        un = nt(u0, 0.495, dx, 0.65, f, df, inflow)
+        
+        #Plot results
+        plt.figure()
+        plt.plot([1,2])
+        plt.subplot(121)
+        plt.plot(xr[1:-1],ur[1:-1])
+        plt.plot(xh[2:-2],uc[2:-2], '.', markersize = 3)
+        plt.title("Central upwind")
+        plt.subplot(122)
+        plt.plot(xr[1:-1],ur[1:-1])
+        plt.plot(xh[2:-2],un[2:-2], '.', markersize = 3)
+        plt.title("Nessyahu-Tadmor")
+        plt.savefig("solution_high.pdf")
+
+
 def Error_verification():
     # Flux function
     def f(u):
@@ -196,4 +218,4 @@ def Error_verification():
     plt.xlabel("N")
     plt.savefig("Error.pdf")
     
-Advection_high_resolution_schemes()
+BL_solution('high')

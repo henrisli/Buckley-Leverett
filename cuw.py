@@ -9,7 +9,7 @@ import numpy as np
 def cuw(u0, cfl, dx, T, flux, dflux, boundary, lim = None):
     if lim == None:
         def lim(r):
-            return np.maximum(0, np.minimum(1.3*r, np.minimum(0.5+0.5*r,1.3)))
+            return np.maximum(0, np.minimum(1.3*r, np.minimum(0.5+0.5*r, 1.3)))
     
     def limiter(a,b):
         return lim(np.divide(b, a + 1e-6))*a
@@ -64,7 +64,6 @@ def cuw(u0, cfl, dx, T, flux, dflux, boundary, lim = None):
         am = np.minimum(np.minimum(dfr, dfl), 0)
         mdf = np.maximum(np.maximum(ap, -am), mdf)
         mdf = max(mdf)
-        #f[j] = (ap[j]*fr[j] - am[j+1]*fl[j+1] + ap[j]*am[j+1]*(ul[j+1] - ur[j]))/ (ap[j]-am[j+1]+1e-6)
         f[j] = (ap[j]*fr[j] - am[j+1]*fl[j+1] + ap[j]*am[j+1]*(ul[j+1] - ur[j]))/ (ap[j]-am[j+1]+1e-6);
     
         u[i] = 0.5*u[i] + 0.5*( U[i]-dt/dx*(f[i]-f[i-1]) )

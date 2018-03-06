@@ -6,6 +6,7 @@ Created on Tue Mar  6 10:39:17 2018
 """
 import numpy as np
 import matplotlib.pyplot as plt
+
 from upw import upw
 from lxf import lxf
 from lxw import lxw
@@ -14,7 +15,8 @@ from cuw import cuw
 from outflow import outflow
 from inflow import inflow
 from periodic import periodic
-import cProfile
+
+import cProfile # To run profiling: type cProfile.run('function_name')
 
 
 # Advection: classic schemes 
@@ -92,6 +94,8 @@ def Advection_high_resolution_schemes():
     plt.legend(["Initial", "Nessyahu-Tadmor", "Central upwind"], loc = 1, fontsize = 5)
     plt.savefig("Advection_high_resolution_schemes.pdf")
 
+# Solution of Buckley-Leverett equation, both with classical
+# and high-resolution schemes.
 def BL_solution(method):
     # Flux function
     def f(u):
@@ -217,5 +221,7 @@ def Error_verification():
     plt.ylabel("Error")
     plt.xlabel("N")
     plt.savefig("Error.pdf")
+    
+    
     
 BL_solution('high')

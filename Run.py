@@ -68,14 +68,15 @@ def Advection_classic_schemes():
     
 # Advection: high-resolution schemes    
 def Advection_high_resolution_schemes():
+    # Limiter function
     def limiter_function(r):
         return np.maximum(0, np.minimum(2*r, np.minimum((r+1)/2, 2)))
     
+    #Set up initial values
     dx = 1/100
     xh = np.arange(-1.5*dx, 1 + 2.5*dx, dx)
     u0 = np.sin((xh-0.1)*np.pi/0.3)**2
     u0[(xh<0.1) | (xh>0.4)] = 0
-    #u0 = np.zeros(len(xh))
     u0[(xh<0.9) & (xh>0.6)] = 1.0
     
     # Flux function

@@ -68,7 +68,7 @@ def Advection_high_resolution_schemes():
     def limiter_function(r):
         return np.maximum(0, np.minimum(2*r, np.minimum((r+1)/2, 2)))
     
-    dx = 1/10   
+    dx = 1/100
     xh = np.arange(-1.5*dx, 1 + 2.5*dx, dx)
     u0 = np.sin((xh-0.1)*np.pi/0.3)**2
     u0[(xh<0.1) | (xh>0.4)] = 0
@@ -82,7 +82,7 @@ def Advection_high_resolution_schemes():
     df = lambda u: np.ones(len(u))
     
     un = nt(u0, 0.495, dx, 50, f, df, periodic, limiter_function)
-    uc = cuw(u0, 0.495, dx, 1, f, df, periodic)
+    uc = cuw(u0, 0.495, dx, 20, f, df, periodic)
     
     plt.figure()
     plt.plot(xh[2:-2], u0[2:-2])

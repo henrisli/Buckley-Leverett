@@ -146,5 +146,45 @@ def BL_solution():
     plt.title("Lax-Wendroff")
     plt.savefig("solution.pdf")
     
+def Error_verification():
+    # Flux function
+    @np.vectorize
+    def f(u):
+        return u**2/(u**2 + (1-u)**2)
     
-Advection_high_resolution_schemes()
+    s = np.linspace(0,1,501)
+    dfv = max(np.diff(f(s))/np.diff(s))
+    df = lambda u: 0*u + dfv
+    
+    # Reference solution
+    dx = 1/10000
+    xr = np.arange(-0.5*dx,1+1.5*dx,dx)
+    u0 = 0*xr
+    u0[xr<0.1]=1.0
+    ur = upw(u0, .995, dx, .65, f, df, outflow)
+    
+    # Solutions on coarser grids
+    N  = np.arange(10,100,10)
+    error_upw = np.zeros(len(N))
+    error_lxf = np.zeros(len(N))
+    error_lxw = np.zeros(len(N))
+    i = 0
+    for n in N:
+        dx = 1/n
+        x  = np.arange(-0.5*dx,1+1.5*dx,dx)
+        u0 = 0*x
+        u0[x<0.1]=1.0
+    
+        uu = upw(u0, .995, dx, .65, f, df, outflow)
+        uf = lxf(u0, .995, dx, .65, f, df, outflow)
+        uw = lxw(u0, .995, dx, .65, f, df, outflow)
+        error_upw[i] = np.linalg.norm(uu[1:-1]-ur,2)
+        error_lxf[i] = np.linalg.norm(uf[1:-1]-ur,2)
+        error_lxw[i] = np.linalg.norm(uw[1:-1]-ur,2)
+        i += 1
+    
+    plt.figure()
+    plt.plot(N,error_upw)
+    
+    
+Error_verification()

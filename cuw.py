@@ -17,9 +17,9 @@ def cuw(u0, cfl, dx, T, flux, dflux, boundary, lim = None):
     dt = cfl*dx/max(abs(dflux(u0)))
     u = np.copy(u0)
     U = np.copy(u0)
-    f = 0*u
     t = 0.0
     n = len(u0)
+    f = np.zeros(n)
     i = np.arange(2,n-2)
     j = np.arange(n-1)
     phi = np.zeros(n)
@@ -29,7 +29,7 @@ def cuw(u0, cfl, dx, T, flux, dflux, boundary, lim = None):
         
         t += dt
         u = boundary(u, 2)
-        du = u[1:] - u[:-1]
+        du = np.diff(u)
         phi[1:-1] = limiter(du[:-1], du[1:])
         # Only when we have periodic boundary conditions: 
         phi[0] = phi[-2]
@@ -48,7 +48,7 @@ def cuw(u0, cfl, dx, T, flux, dflux, boundary, lim = None):
         U[i] = u[i] - dt/dx*(f[i]-f[i-1])
           
         U = boundary(U,2)
-        du = U[1:] - U[:-1]
+        du = np.diff(U)
         phi[1:-1] = limiter(du[:-1], du[1:])
         # Only when we have periodic boundary conditions: 
         phi[0] = phi[-2]

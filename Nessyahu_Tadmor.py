@@ -25,12 +25,12 @@ def nt(u0, cfl, dx, T, flux, dflux, boundary, lim = None):
             dt = 0.5*(T-t)
         
         u = boundary(u,2)
-        du = u[1:]-u[:-1]
+        du = np.diff(u)
         s[1:-1] = limiter(du[:-1], du[1:])
         s[0] = s[-2]
         s[-1] = s[1]
         f = flux(u)
-        df = f[1:]-f[:-1]
+        df = np.diff(f)
         sigma[1:-1] = limiter(df[:-1], df[1:])
         # Only when we have periodic boundary conditions: 
         sigma[0] = sigma[-2]
@@ -40,12 +40,12 @@ def nt(u0, cfl, dx, T, flux, dflux, boundary, lim = None):
         u[1:] = 0.5*(u[:-1] + u[1:]) - dt/dx*(g[1:]-g[:-1])
         
         u = boundary(u,2)
-        du = u[1:]-u[:-1]
+        du = np.diff(u)
         s[1:-1] = limiter(du[:-1], du[1:])
         s[0] = s[-2]
         s[-1] = s[1]
         f = flux(u)
-        df = f[1:]-f[:-1]
+        df = np.diff(f)
         sigma[1:-1] = limiter(df[:-1], df[1:])
         # Only when we have periodic boundary conditions: 
         sigma[0] = sigma[-2]

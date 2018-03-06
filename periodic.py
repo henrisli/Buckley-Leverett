@@ -13,3 +13,5 @@ def periodic(u, n=0):
         u[:n] = u[-2*n:-n]
         u[-n:] = u[n:2*n]
     return u
+
+#hei

@@ -147,4 +147,4 @@ def BL_solution():
     plt.savefig("solution.pdf")
     
     
-Advection_high_resolution_schemes()
+Advection_classic_schemes()

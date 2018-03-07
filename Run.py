@@ -31,11 +31,10 @@ def Advection_classic_schemes():
     
     
     # Flux function
-    @np.vectorize
     def f(u):
         return u
     
-    df = lambda u: 0*u + 1
+    df = lambda u: np.zeros(len(u)) + 1
     
     # Run simulation
     uu = upw(u0, .995, dx, 20, f, df, periodic)
@@ -216,10 +215,11 @@ def Error_verification():
         plt.plot(x[1:-1], uu)
         uf = uf[1:-1]
         uw = uw[1:-1]
-        error_upw[j] = np.linalg.norm(uu - ur_comp, 2)
-        error_lxf[j] = np.linalg.norm(uf - ur_comp, 2)
-        error_lxw[j] = np.linalg.norm(uw - ur_comp, 2)
+        error_upw[j] = np.sqrt(dX)*np.linalg.norm(uu - ur_comp, 2)
+        error_lxf[j] = np.sqrt(dX)*np.linalg.norm(uf - ur_comp, 2)
+        error_lxw[j] = np.sqrt(dX)*np.linalg.norm(uw - ur_comp, 2)
         j += 1
+        
     plt.figure()
     plt.loglog(N,error_upw)
     plt.loglog(N,error_lxf)
@@ -229,4 +229,4 @@ def Error_verification():
     plt.xlabel("N")
     plt.savefig("Error.pdf")
     
-Error_verification()
+BL_solution('high')

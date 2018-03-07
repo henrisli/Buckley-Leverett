@@ -97,10 +97,10 @@ def Advection_high_resolution_schemes():
 
 # Solution of Buckley-Leverett equation, both with classical
 # and high-resolution schemes.
-def BL_solution(method, initial):
+def BL_solution(method, initial, M = 1):
     # Flux function
     def f(u):
-        return np.divide(np.power(u,2),np.power(u,2) + np.power(1-u,2))
+        return np.divide(np.power(u,2),np.power(u,2) + M*np.power(1-u,2))
     
     def limiter_function(r):
         return np.maximum(0, np.minimum(2*r, np.minimum((r+1)/2, 2)))
@@ -330,4 +330,4 @@ def Error_verification(method, initial):
             plt.savefig("Error_high_cont.pdf")
 
 
-Error_verification('high', 'cont')
+BL_solution('classical','dis')

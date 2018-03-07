@@ -37,9 +37,9 @@ def Advection_classic_schemes():
     df = lambda u: np.zeros(len(u)) + 1
     
     # Run simulation
-    uu = upw(u0, .995, dx, 20, f, df, periodic)
-    uf = lxf(u0, .995, dx, 20, f, df, periodic)
-    uw = lxw(u0, .995, dx, 20, f, df, periodic)
+    uu = upw(u0, 0.995, dx, 20, f, df, periodic)
+    uf = lxf(u0, 0.995, dx, 20, f, df, periodic)
+    uw = lxw(u0, 0.995, dx, 20, f, df, periodic)
     
     # Plot results
     plt.figure()
@@ -76,7 +76,7 @@ def Advection_high_resolution_schemes():
     xh = np.arange(-1.5*dx, 1 + 2.5*dx, dx)
     u0 = np.sin((xh-0.1)*np.pi/0.3)**2
     u0[(xh<0.1) | (xh>0.4)] = 0
-    u0[(xh<0.9) & (xh>0.6)] = 1.0
+    #u0[(xh<0.9) & (xh>0.6)] = 1.0
     
     # Flux function
     def f(u):
@@ -84,8 +84,8 @@ def Advection_high_resolution_schemes():
     
     df = lambda u: np.ones(len(u))
     
-    un = nt(u0, 0.495, dx, 200, f, df, periodic, limiter_function)
-    uc = cuw(u0, 0.495, dx, 15, f, df, periodic)
+    un = nt(u0, 0.495, dx, 1, f, df, periodic, limiter_function)
+    uc = cuw(u0, 0.495, dx, 1, f, df, periodic)
     
     plt.figure()
     plt.plot(xh[2:-2], u0[2:-2])
@@ -96,7 +96,7 @@ def Advection_high_resolution_schemes():
 
 # Solution of Buckley-Leverett equation, both with classical
 # and high-resolution schemes.
-def BL_solution(method):
+def BL_solution(method, initial):
     # Flux function
     def f(u):
         return np.divide(np.power(u,2),np.power(u,2) + np.power(1-u,2))
@@ -104,28 +104,41 @@ def BL_solution(method):
     def limiter_function(r):
         return np.maximum(0, np.minimum(2*r, np.minimum((r+1)/2, 2)))
     
-    s = np.linspace(0,1,501)
+    s = np.linspace(0,1,1001)
     dfv = max(np.diff(f(s))/np.diff(s))
     df = lambda u: np.zeros(len(u)) + dfv
     
     # Reference solution
     dx = 1/1000
     xr = np.arange(-0.5*dx,1+1.5*dx,dx)
-    u0 = 0*xr
-    u0[xr<0.1]=1.0
-    ur = upw(u0, .995, dx, .65, f, df, outflow)
+    # Discontinuous initial:
+    if initial == 'dis':
+        u0 = np.zeros(len(xr))
+        u0[xr<0.1]=1.0
+    # Continuous initial:
+    elif initial == 'cont':
+        u0 = np.sin((xr-0.1)*np.pi/0.3)**2
+        u0[(xr<0.1) | (xr>0.4)] = 0
+        
+    ur = upw(u0, 0.995, dx, 0.5, f, df, outflow)
     
     if method == 'classical':
         # Solutions on coarser grids
-        N  = 10
+        N  = 50
         dx = 1/N
         x  = np.arange(-0.5*dx,1+1.5*dx,dx)
-        u0 = 0*x
-        u0[x<0.1]=1.0
+        # Discontinuous initial:
+        if initial == 'dis':
+            u0 = np.zeros(len(x))
+            u0[x<0.1]=1.0
+        # Continuous initial:
+        elif initial == 'cont':
+            u0 = np.sin((x-0.1)*np.pi/0.3)**2
+            u0[(x<0.1) | (x>0.4)] = 0
         
-        uu = upw(u0, .995, dx, 0.65, f, df, outflow)
-        uf = lxf(u0, .995, dx, 0.65, f, df, outflow)
-        uw = lxw(u0, .995, dx, 0.65, f, df, outflow)
+        uu = upw(u0, .995, dx, 0.5, f, df, outflow)
+        uf = lxf(u0, .995, dx, 0.5, f, df, outflow)
+        uw = lxw(u0, .995, dx, 0.5, f, df, outflow)
     
         # Plot results
         plt.figure()
@@ -142,18 +155,27 @@ def BL_solution(method):
         plt.plot(xr[1:-1],ur[1:-1])
         plt.plot(x[1:-1],uw[1:-1],'.', markersize = 3)
         plt.title("Lax-Wendroff")
-        plt.savefig("solution_classical.pdf")
+        if initial == 'cont':
+            plt.savefig("solution_classical_cont.pdf")
+        elif initial == 'dis':
+            plt.savefig("solution_classical_discont.pdf")
     
     elif method == 'high':
         N  = 50
         dx = 1/N
         xh = np.arange(-1.5*dx, 1 + 2.5*dx, dx)
-        u0 = 0*xh
-        u0[xh<0.1] = 1
-        
-        
-        uc = cuw(u0, 0.495, dx, 0.65, f, df, inflow)
-        un = nt(u0, 0.495, dx, 0.65, f, df, inflow)
+        # Discontinuous initial:
+        if initial == 'dis':
+            u0 = np.zeros(len(xh))
+            u0[xh<0.1]=1.0
+        # Continuous initial:
+        if initial == 'cont':
+            u0 = np.sin((xh-0.1)*np.pi/0.3)**2
+            u0[(xh<0.1) | (xh>0.4)] = 0
+            
+            
+        uc = cuw(u0, 0.995, dx, 0.5, f, df, inflow)
+        un = nt(u0, 0.495, dx, 0.5, f, df, inflow)
         
         #Plot results
         plt.figure()
@@ -166,10 +188,13 @@ def BL_solution(method):
         plt.plot(xr[1:-1],ur[1:-1])
         plt.plot(xh[2:-2],un[2:-2], '.', markersize = 3)
         plt.title("Nessyahu-Tadmor")
-        plt.savefig("solution_high.pdf")
+        if initial == 'cont':
+            plt.savefig("solution_high_cont.pdf")
+        elif initial == 'dis':
+            plt.savefig("solution_high_discont.pdf")
 
 
-def Error_verification():
+def Error_verification(initial):
     # Flux function
     def f(u):
         return np.divide(np.power(u,2),np.power(u,2) + np.power(1-u,2))
@@ -179,31 +204,42 @@ def Error_verification():
     df = lambda u: np.zeros(len(u)) + dfv
     
     # Reference solution
-    dx = 1/1000
+    dx = 1/4000
     xr = np.arange(-0.5*dx,1+1.5*dx,dx)
-    u0 = np.zeros(len(xr))
-    u0[xr<0.1]=1.0
+    # Discontinuous initial:
+    if initial == 'dis':
+        u0 = np.zeros(len(xr))
+        u0[xr<0.1]=1.0
+    # Continuous initial:
+    elif initial == 'cont':
+        u0 = np.sin((xr-0.1)*np.pi/0.3)**2
+        u0[(xr<0.1) | (xr>0.4)] = 0
+    
     ur = upw(u0, .995, dx, .65, f, df, outflow)
     
     # Solutions on coarser grids
-    N  = np.array([10,20,40,50,100,200,500])
+    N  = np.array([10,20,40,80,160])
     error_upw = np.zeros(len(N))
     error_lxf = np.zeros(len(N))
     error_lxw = np.zeros(len(N))
     j = 0
-    plt.figure()
-    plt.plot(xr[1:-1], ur[1:-1])
     for n in N:
         dX = 1/n
         x  = np.arange(-0.5*dX,1+1.5*dX,dX)
-        u0 = np.zeros(len(x))
-        u0[x<0.1]=1.0
+        # Discontinuous initial:
+        if initial == 'dis':
+            u0 = np.zeros(len(x))
+            u0[x<0.1]=1.0
+        # Continuous initial:
+        elif initial == 'cont':
+            u0 = np.sin((x-0.1)*np.pi/0.3)**2
+            u0[(x<0.1) | (x>0.4)] = 0
         uu = upw(u0, .995, dX, .65, f, df, outflow)
         uf = lxf(u0, .995, dX, .65, f, df, outflow)
         uw = lxw(u0, .995, dX, .65, f, df, outflow)
-        x_e = [False]*1001
+        x_e = [False]*4001
         for i in range(len(x[1:-1])):
-            x_e[int(dX*1000*(i+0.5))] = True
+            x_e[int(dX/dx*(i+0.5))] = True
         ur_e = 0.5*ur[1:] + 0.5*ur[:-1]
         ur_comp = np.zeros(len(x[1:-1]))
         k = 0
@@ -212,7 +248,6 @@ def Error_verification():
                 ur_comp[k] = ur_e[i]
                 k += 1
         uu = uu[1:-1]
-        plt.plot(x[1:-1], uu)
         uf = uf[1:-1]
         uw = uw[1:-1]
         error_upw[j] = np.sqrt(dX)*np.linalg.norm(uu - ur_comp, 2)
@@ -227,6 +262,10 @@ def Error_verification():
     plt.legend(["UW","LF","LW"])
     plt.ylabel("Error")
     plt.xlabel("N")
-    plt.savefig("Error.pdf")
-    
-BL_solution('high')
+    if initial=='dis':
+        plt.savefig("Error_disc.pdf")
+    elif initial=='cont':
+        plt.savefig("Error_cont.pdf")
+
+
+Error_verification('dis')

@@ -118,7 +118,7 @@ def BL_solution(method):
     
     if method == 'classical':
         # Solutions on coarser grids
-        N  = 50
+        N  = 10
         dx = 1/N
         x  = np.arange(-0.5*dx,1+1.5*dx,dx)
         u0 = 0*x
@@ -182,38 +182,44 @@ def Error_verification():
     # Reference solution
     dx = 1/1000
     xr = np.arange(-0.5*dx,1+1.5*dx,dx)
-    u0 = 0*xr
+    u0 = np.zeros(len(xr))
     u0[xr<0.1]=1.0
     ur = upw(u0, .995, dx, .65, f, df, outflow)
     
     # Solutions on coarser grids
-    N  = np.arange(10,20,10)
+    N  = np.array([10,20,40,50,100,200,500])
     error_upw = np.zeros(len(N))
     error_lxf = np.zeros(len(N))
     error_lxw = np.zeros(len(N))
-    i = 0
+    j = 0
+    plt.figure()
+    plt.plot(xr[1:-1], ur[1:-1])
     for n in N:
         dX = 1/n
         x  = np.arange(-0.5*dX,1+1.5*dX,dX)
-        print(x)
-        u0 = 0*x
+        u0 = np.zeros(len(x))
         u0[x<0.1]=1.0
-        #print(N[i])
-        uu = upw(u0, .995, dx, .65, f, df, outflow)
-        uf = lxf(u0, .995, dx, .65, f, df, outflow)
-        uw = lxw(u0, .995, dx, .65, f, df, outflow)
-        a = np.zeros((len(xr)-2,3))
-        print(len(x)-2)
-        for j in range(len(x)-2):
-            j1 = int(np.floor(j*dX/dx))
-            j2 = int(np.floor((j+1)*dX/dx))
-            for k in range(j1,j2-1):
-                a[k,:] = [uu[j+1],uf[j+1],uw[j+1]]
-        error_upw[i] = np.linalg.norm(a[:,0] - ur[1:-1], 2)
-        error_lxf[i] = np.linalg.norm(a[:,1] - ur[1:-1], 2)
-        error_lxw[i] = np.linalg.norm(a[:,2] - ur[1:-1], 2)
-        i += 1
-    
+        uu = upw(u0, .995, dX, .65, f, df, outflow)
+        uf = lxf(u0, .995, dX, .65, f, df, outflow)
+        uw = lxw(u0, .995, dX, .65, f, df, outflow)
+        x_e = [False]*1001
+        for i in range(len(x[1:-1])):
+            x_e[int(dX*1000*(i+0.5))] = True
+        ur_e = 0.5*ur[1:] + 0.5*ur[:-1]
+        ur_comp = np.zeros(len(x[1:-1]))
+        k = 0
+        for i in range(len(x_e)):
+            if x_e[i]:
+                ur_comp[k] = ur_e[i]
+                k += 1
+        uu = uu[1:-1]
+        plt.plot(x[1:-1], uu)
+        uf = uf[1:-1]
+        uw = uw[1:-1]
+        error_upw[j] = np.linalg.norm(uu - ur_comp, 2)
+        error_lxf[j] = np.linalg.norm(uf - ur_comp, 2)
+        error_lxw[j] = np.linalg.norm(uw - ur_comp, 2)
+        j += 1
     plt.figure()
     plt.loglog(N,error_upw)
     plt.loglog(N,error_lxf)
@@ -223,6 +229,4 @@ def Error_verification():
     plt.xlabel("N")
     plt.savefig("Error.pdf")
     
-    
-    
-BL_solution('high')
+Error_verification()

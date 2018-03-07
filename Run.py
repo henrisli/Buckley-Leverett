@@ -23,18 +23,19 @@ import cProfile # To run profiling: type cProfile.run('function_name')
 # Initial data: set up initial data and add a fictitious node at each end
 # of the interval. These cells will be used to impose boundary conditions.
 def Advection_classic_schemes():
-    dx = 1/100
-    x  = np.arange(-0.5*dx, 1+1.5*dx, dx)
-    u0 = np.sin((x-0.1)*np.pi/0.3)**2
-    u0[(x<0.1) | (x>0.4)] = 0
-    u0[(x<0.9) & (x>0.6)] = 1.0
-    
-    
     # Flux function
     def f(u):
         return u
     
     df = lambda u: np.zeros(len(u)) + 1
+    
+    N = 50
+    dx = 1/N
+    x  = np.arange(-0.5*dx, 1+1.5*dx, dx)
+    u0 = np.sin((x-0.1)*np.pi/0.3)**2
+    u0[(x<0.1) | (x>0.4)] = 0
+    u0[(x<0.9) & (x>0.6)] = 1.0
+    
     
     # Run simulation
     uu = upw(u0, 0.995, dx, 20, f, df, periodic)
@@ -76,7 +77,7 @@ def Advection_high_resolution_schemes():
     xh = np.arange(-1.5*dx, 1 + 2.5*dx, dx)
     u0 = np.sin((xh-0.1)*np.pi/0.3)**2
     u0[(xh<0.1) | (xh>0.4)] = 0
-    #u0[(xh<0.9) & (xh>0.6)] = 1.0
+    u0[(xh<0.9) & (xh>0.6)] = 1.0
     
     # Flux function
     def f(u):
@@ -120,12 +121,14 @@ def BL_solution(method, initial):
         u0 = np.sin((xr-0.1)*np.pi/0.3)**2
         u0[(xr<0.1) | (xr>0.4)] = 0
         
-    ur = upw(u0, 0.995, dx, 0.5, f, df, outflow)
+    ur = upw(u0, 0.995, dx, 0.65, f, df, outflow)
+    
+     # Solutions on coarser grids
+    N  = 50
+    dx = 1/N
     
     if method == 'classical':
-        # Solutions on coarser grids
-        N  = 50
-        dx = 1/N
+       
         x  = np.arange(-0.5*dx,1+1.5*dx,dx)
         # Discontinuous initial:
         if initial == 'dis':
@@ -136,9 +139,9 @@ def BL_solution(method, initial):
             u0 = np.sin((x-0.1)*np.pi/0.3)**2
             u0[(x<0.1) | (x>0.4)] = 0
         
-        uu = upw(u0, .995, dx, 0.5, f, df, outflow)
-        uf = lxf(u0, .995, dx, 0.5, f, df, outflow)
-        uw = lxw(u0, .995, dx, 0.5, f, df, outflow)
+        uu = upw(u0, .995, dx, 0.65, f, df, outflow)
+        uf = lxf(u0, .995, dx, 0.65, f, df, outflow)
+        uw = lxw(u0, .995, dx, 0.65, f, df, outflow)
     
         # Plot results
         plt.figure()
@@ -161,9 +164,9 @@ def BL_solution(method, initial):
             plt.savefig("solution_classical_discont.pdf")
     
     elif method == 'high':
-        N  = 50
-        dx = 1/N
+        
         xh = np.arange(-1.5*dx, 1 + 2.5*dx, dx)
+        
         # Discontinuous initial:
         if initial == 'dis':
             u0 = np.zeros(len(xh))
@@ -174,7 +177,7 @@ def BL_solution(method, initial):
             u0[(xh<0.1) | (xh>0.4)] = 0
             
             
-        uc = cuw(u0, 0.995, dx, 0.5, f, df, inflow)
+        uc = cuw(u0, 0.495, dx, 0.5, f, df, inflow)
         un = nt(u0, 0.495, dx, 0.5, f, df, inflow)
         
         #Plot results
@@ -194,22 +197,33 @@ def BL_solution(method, initial):
             plt.savefig("solution_high_discont.pdf")
 
 
-def Error_verification(initial):
-    # Flux function
+def Error_verification(method, initial):
+    # BL flux function:
     def f(u):
         return np.divide(np.power(u,2),np.power(u,2) + np.power(1-u,2))
     
+    # Advection flux:
+    #def f(u):
+    #    return u
+    
+    # Derivative of flux for BL:
     s = np.linspace(0,1,501)
     dfv = max(np.diff(f(s))/np.diff(s))
     df = lambda u: np.zeros(len(u)) + dfv
     
+    # Derivative of flux for advection:
+    #df = lambda u: np.zeros(len(u)) + 1
+    
+    
     # Reference solution
     dx = 1/4000
     xr = np.arange(-0.5*dx,1+1.5*dx,dx)
+    
     # Discontinuous initial:
     if initial == 'dis':
         u0 = np.zeros(len(xr))
         u0[xr<0.1]=1.0
+        
     # Continuous initial:
     elif initial == 'cont':
         u0 = np.sin((xr-0.1)*np.pi/0.3)**2
@@ -219,53 +233,101 @@ def Error_verification(initial):
     
     # Solutions on coarser grids
     N  = np.array([10,20,40,80,160])
-    error_upw = np.zeros(len(N))
-    error_lxf = np.zeros(len(N))
-    error_lxw = np.zeros(len(N))
+    
+    if method == 'classical':
+        error_upw = np.zeros(len(N))
+        error_lxf = np.zeros(len(N))
+        error_lxw = np.zeros(len(N))
+    elif method == 'high':
+        error_nt = np.zeros(len(N))
+        error_cuw = np.zeros(len(N))
     j = 0
     for n in N:
         dX = 1/n
-        x  = np.arange(-0.5*dX,1+1.5*dX,dX)
-        # Discontinuous initial:
-        if initial == 'dis':
-            u0 = np.zeros(len(x))
-            u0[x<0.1]=1.0
-        # Continuous initial:
-        elif initial == 'cont':
-            u0 = np.sin((x-0.1)*np.pi/0.3)**2
-            u0[(x<0.1) | (x>0.4)] = 0
-        uu = upw(u0, .995, dX, .65, f, df, outflow)
-        uf = lxf(u0, .995, dX, .65, f, df, outflow)
-        uw = lxw(u0, .995, dX, .65, f, df, outflow)
-        x_e = [False]*4001
-        for i in range(len(x[1:-1])):
-            x_e[int(dX/dx*(i+0.5))] = True
-        ur_e = 0.5*ur[1:] + 0.5*ur[:-1]
-        ur_comp = np.zeros(len(x[1:-1]))
-        k = 0
-        for i in range(len(x_e)):
-            if x_e[i]:
-                ur_comp[k] = ur_e[i]
-                k += 1
-        uu = uu[1:-1]
-        uf = uf[1:-1]
-        uw = uw[1:-1]
-        error_upw[j] = np.sqrt(dX)*np.linalg.norm(uu - ur_comp, 2)
-        error_lxf[j] = np.sqrt(dX)*np.linalg.norm(uf - ur_comp, 2)
-        error_lxw[j] = np.sqrt(dX)*np.linalg.norm(uw - ur_comp, 2)
-        j += 1
-        
-    plt.figure()
-    plt.loglog(N,error_upw)
-    plt.loglog(N,error_lxf)
-    plt.loglog(N,error_lxw)
-    plt.legend(["UW","LF","LW"])
-    plt.ylabel("Error")
-    plt.xlabel("N")
-    if initial=='dis':
-        plt.savefig("Error_disc.pdf")
-    elif initial=='cont':
-        plt.savefig("Error_cont.pdf")
+        if method == 'classical':
+            x  = np.arange(-0.5*dX,1+1.5*dX,dX)
+            # Discontinuous initial:
+            if initial == 'dis':
+                u0 = np.zeros(len(x))
+                u0[x<0.1]=1.0
+            # Continuous initial:
+            elif initial == 'cont':
+                u0 = np.sin((x-0.1)*np.pi/0.3)**2
+                u0[(x<0.1) | (x>0.4)] = 0
+            uu = upw(u0, .995, dX, .65, f, df, outflow)
+            uf = lxf(u0, .995, dX, .65, f, df, outflow)
+            uw = lxw(u0, .995, dX, .65, f, df, outflow)
+            x_e = [False]*4001
+            for i in range(len(x[1:-1])):
+                x_e[int(dX/dx*(i+0.5))] = True
+            ur_e = 0.5*ur[1:] + 0.5*ur[:-1]
+            ur_comp = np.zeros(len(x[1:-1]))
+            k = 0
+            for i in range(len(x_e)):
+                if x_e[i]:
+                    ur_comp[k] = ur_e[i]
+                    k += 1
+            uu = uu[1:-1]
+            uf = uf[1:-1]
+            uw = uw[1:-1]
+            error_upw[j] = np.sqrt(dX)*np.linalg.norm(uu - ur_comp, 2)
+            error_lxf[j] = np.sqrt(dX)*np.linalg.norm(uf - ur_comp, 2)
+            error_lxw[j] = np.sqrt(dX)*np.linalg.norm(uw - ur_comp, 2)
+            j += 1
+        elif method == "high":
+            xh = np.arange(-1.5*dX, 1 + 2.5*dX, dX)
+            # Discontinuous initial:
+            if initial == 'dis':
+                u0 = np.zeros(len(xh))
+                u0[xh<0.1]=1.0
+                
+            # Continuous initial:
+            elif initial == 'cont':
+                u0 = np.sin((xh-0.1)*np.pi/0.3)**2
+                u0[(xh<0.1) | (xh>0.4)] = 0
+                
+            un = nt(u0, .495, dX, .65, f, df, outflow)
+            uc = cuw(u0, .495, dX, .65, f, df, outflow)
+            x_e = [False]*4001
+            for i in range(len(xh[2:-2])):
+                x_e[int(dX/dx*(i+0.5))] = True
+            ur_e = 0.5*ur[1:] + 0.5*ur[:-1]
+            ur_comp = np.zeros(len(xh[2:-2]))
+            k = 0
+            for i in range(len(x_e)):
+                if x_e[i]:
+                    ur_comp[k] = ur_e[i]
+                    k += 1
+            un = un[2:-2]
+            uc = uc[2:-2]
+            error_nt[j] = np.sqrt(dX)*np.linalg.norm(un - ur_comp, 2)
+            error_cuw[j] = np.sqrt(dX)*np.linalg.norm(uc - ur_comp, 2)
+            j += 1
+    
+    
+    if method == 'classical':
+        plt.figure()
+        plt.loglog(N,error_upw)
+        plt.loglog(N,error_lxf)
+        plt.loglog(N,error_lxw)
+        plt.legend(["UW","LF","LW"])
+        plt.ylabel("Error")
+        plt.xlabel("N")
+        if initial=='dis':
+            plt.savefig("Error_classical_disc.pdf")
+        elif initial=='cont':
+            plt.savefig("Error_classical_cont.pdf")
+    elif method == 'high':
+        plt.figure()
+        plt.loglog(N,error_nt)
+        plt.loglog(N,error_cuw)
+        plt.legend(["NT","CUW"])
+        plt.ylabel("Error")
+        plt.xlabel("N")
+        if initial=='dis':
+            plt.savefig("Error_high_disc.pdf")
+        elif initial=='cont':
+            plt.savefig("Error_high_cont.pdf")
 
 
-Error_verification('dis')
+Error_verification('high', 'cont')

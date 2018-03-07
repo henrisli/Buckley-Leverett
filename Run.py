@@ -214,6 +214,9 @@ def Error_verification(method, initial):
     # Derivative of flux for advection:
     #df = lambda u: np.zeros(len(u)) + 1
     
+<<<<<<< HEAD
+Advection_classic_schemes()
+=======
     
     # Reference solution
     dx = 1/4000
@@ -330,4 +333,9 @@ def Error_verification(method, initial):
             plt.savefig("Error_high_cont.pdf")
 
 
+<<<<<<< HEAD
 BL_solution('classical','dis')
+=======
+Error_verification('high', 'cont')
+>>>>>>> 3118966cb0b212cc10073626c42932b3535e0c55
+>>>>>>> 9f0e4c32618caa911eeb596ad0cf8ec49e835fcd

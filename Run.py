@@ -139,7 +139,7 @@ def BL_solution(method, initial, M = 1):
             u0 = np.sin((x-0.1)*np.pi/0.3)**2
             u0[(x<0.1) | (x>0.4)] = 0
         
-        uu = upw(u0, .995, dx, 0.65, f, df, outflow)
+        uu = upw(u0, .9, dx, 0.65, f, df, outflow)
         uf = lxf(u0, .995, dx, 0.65, f, df, outflow)
         uw = lxw(u0, .995, dx, 0.65, f, df, outflow)
     
@@ -231,7 +231,7 @@ def Error_verification(method, initial):
     ur = upw(u0, .995, dx, .65, f, df, outflow)
     
     # Solutions on coarser grids
-    N  = np.array([10,20,40,80,160])
+    N  = np.array([5,10,20,80,160])
     
     if method == 'classical':
         error_upw = np.zeros(len(N))
@@ -329,5 +329,4 @@ def Error_verification(method, initial):
             plt.savefig("Error_high_cont.pdf")
 
 
-
-BL_solution('classical','dis')
+BL_solution('classical', 'dis')

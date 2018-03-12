@@ -20,5 +20,4 @@ def upw(u0, cfl, dx, T, flux, df, boundary):
         f = flux(u)
         u[i] = u[i] - dt/dx*(f[i]-f[i-1])
         dt = cfl*dx/max(abs(df(u)))
-        print(dt)
     return u

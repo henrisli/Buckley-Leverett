@@ -139,7 +139,7 @@ def BL_solution(method, initial, M = 1):
             u0 = np.sin((x-0.1)*np.pi/0.3)**2
             u0[(x<0.1) | (x>0.4)] = 0
         
-        uu = upw(u0, .9, dx, 0.65, f, df, outflow)
+        uu = upw(u0, .995, dx, 0.65, f, df, outflow)
         uf = lxf(u0, .995, dx, 0.65, f, df, outflow)
         uw = lxw(u0, .995, dx, 0.65, f, df, outflow)
     
@@ -197,7 +197,7 @@ def BL_solution(method, initial, M = 1):
             plt.savefig("solution_high_discont.pdf")
 
 
-def Error_verification(method, initial):
+def Error_verification_space(method, initial):
     # BL flux function:
     def f(u):
         return np.divide(np.power(u,2),np.power(u,2) + np.power(1-u,2))
@@ -215,9 +215,9 @@ def Error_verification(method, initial):
     #df = lambda u: np.zeros(len(u)) + 1
         
     # Reference solution
-    dx = 1/4000
+    dx = 1/1000
     xr = np.arange(-0.5*dx,1+1.5*dx,dx)
-    
+    print(xr)
     # Discontinuous initial:
     if initial == 'dis':
         u0 = np.zeros(len(xr))
@@ -245,6 +245,7 @@ def Error_verification(method, initial):
         dX = 1/n
         if method == 'classical':
             x  = np.arange(-0.5*dX,1+1.5*dX,dX)
+            print(x)
             # Discontinuous initial:
             if initial == 'dis':
                 u0 = np.zeros(len(x))
@@ -256,7 +257,7 @@ def Error_verification(method, initial):
             uu = upw(u0, .995, dX, .65, f, df, outflow)
             uf = lxf(u0, .995, dX, .65, f, df, outflow)
             uw = lxw(u0, .995, dX, .65, f, df, outflow)
-            x_e = [False]*4001
+            x_e = [False]*1001
             for i in range(len(x[1:-1])):
                 x_e[int(dX/dx*(i+0.5))] = True
             ur_e = 0.5*ur[1:] + 0.5*ur[:-1]
@@ -306,9 +307,9 @@ def Error_verification(method, initial):
     
     if method == 'classical':
         plt.figure()
-        plt.loglog(N,error_upw)
-        plt.loglog(N,error_lxf)
-        plt.loglog(N,error_lxw)
+        plt.loglog([1/i for i in N],error_upw)
+        plt.loglog([1/i for i in N],error_lxf)
+        plt.loglog([1/i for i in N],error_lxw)
         plt.legend(["UW","LF","LW"])
         plt.ylabel("Error")
         plt.xlabel("N")
@@ -328,5 +329,4 @@ def Error_verification(method, initial):
         elif initial=='cont':
             plt.savefig("Error_high_cont.pdf")
 
-
-BL_solution('classical', 'dis')
+Error_verification_space('classical','dis')

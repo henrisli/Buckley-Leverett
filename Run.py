@@ -211,7 +211,7 @@ def BL_solution(method, initial, M = 1):
             plt.savefig("solution_high_discont.pdf")
 
 
-def Error_verification(method, initial):
+def Error_verification(method, initial, norm):
     # BL flux function:
     def f(u):
         return np.divide(np.power(u,2),np.power(u,2) + np.power(1-u,2))
@@ -226,12 +226,12 @@ def Error_verification(method, initial):
     # Discontinuous initial:
     if initial == 'dis':
         u0 = np.zeros(len(xr))
-        u0[xr<0.1]=1.0
+        u0[xr<0.0]=1.0
         
     # Continuous initial:
     elif initial == 'cont':
-        u0 = np.sin((xr-0.1)*np.pi/0.3)**2
-        u0[(xr<0.1) | (xr>0.4)] = 0
+        u0 = np.sin(xr*np.pi/0.3)**2
+        u0[xr>0.3] = 0
     
     ur = upw(u0, .995, dx, 1, f, df, outflow)
     
@@ -250,36 +250,34 @@ def Error_verification(method, initial):
         dX = 1/n
         if method == 'classical':
             x  = np.arange(-0.5*dX,1+1.5*dX,dX)
+            
             # Discontinuous initial:
             if initial == 'dis':
                 u0 = np.zeros(len(x))
-                u0[x<0.1]=1.0
+                u0[x<0.0]=1.0
+                
             # Continuous initial:
             elif initial == 'cont':
-                u0 = np.sin((x-0.1)*np.pi/0.3)**2
-                u0[(x<0.1) | (x>0.4)] = 0
+                u0 = np.sin(x*np.pi/0.3)**2
+                u0[x>0.3] = 0
+                
             uu = upw(u0, .995, dX, 1, f, df, outflow)
-            uf = lxf(u0, .995, dX, 1, f, df, outflow)
-            uw = lxw(u0, .995, dX, 1, f, df, outflow)
-            x_e = [False]*(2**12+1)
-            for i in range(len(x[1:-1])):
-                x_e[int(dX/dx*(i+0.5))] = True
-            ur_e = 0.5*ur[1:] + 0.5*ur[:-1]
-            ur_comp = np.zeros(len(x[1:-1]))
-            k = 0
-            for i in range(len(x_e)):
-                if x_e[i]:
-                    ur_comp[k] = ur_e[i]
-                    k += 1
             uu = uu[1:-1]
+            uf = lxf(u0, .995, dX, 1, f, df, outflow)
             uf = uf[1:-1]
+            uw = lxw(u0, .995, dX, 1, f, df, outflow)
             uw = uw[1:-1]
-            error_upw[j] = np.sqrt(dX)*np.linalg.norm(uu - ur_comp, 2)
-            error_lxf[j] = np.sqrt(dX)*np.linalg.norm(uf - ur_comp, 2)
-            error_lxw[j] = np.sqrt(dX)*np.linalg.norm(uw - ur_comp, 2)
+            uu_cc = [i for i in uu for j in range(int(dX/dx))]
+            uf_cc = [i for i in uf for j in range(int(dX/dx))]
+            uw_cc = [i for i in uw for j in range(int(dX/dx))]
+            error_upw[j] = np.sqrt(dX)*np.linalg.norm(uu_cc - ur[1:-1],norm)
+            error_lxf[j] = np.sqrt(dX)*np.linalg.norm(uf_cc - ur[1:-1],norm)
+            error_lxw[j] = np.sqrt(dX)*np.linalg.norm(uw_cc - ur[1:-1],norm)
             j += 1
+            
         elif method == "high":
             xh = np.arange(-1.5*dX, 1 + 2.5*dX, dX)
+            
             # Discontinuous initial:
             if initial == 'dis':
                 u0 = np.zeros(len(xh))
@@ -287,25 +285,17 @@ def Error_verification(method, initial):
                 
             # Continuous initial:
             elif initial == 'cont':
-                u0 = np.sin((xh-0.1)*np.pi/0.3)**2
-                u0[(xh<0.1) | (xh>0.4)] = 0
+                u0 = np.sin(xh*np.pi/0.3)**2
+                u0[xh>0.3] = 0
                 
             un = nt(u0, .495, dX, 1, f, df, outflow)
-            uc = cuw(u0, .495, dX, 1, f, df, outflow)
-            x_e = [False]*(2**12+1)
-            for i in range(len(xh[2:-2])):
-                x_e[int(dX/dx*(i+0.5))] = True
-            ur_e = 0.5*ur[1:] + 0.5*ur[:-1]
-            ur_comp = np.zeros(len(xh[2:-2]))
-            k = 0
-            for i in range(len(x_e)):
-                if x_e[i]:
-                    ur_comp[k] = ur_e[i]
-                    k += 1
             un = un[2:-2]
+            uc = cuw(u0, .495, dX, 1, f, df, outflow)
             uc = uc[2:-2]
-            error_nt[j] = np.sqrt(dX)*np.linalg.norm(un - ur_comp, 2)
-            error_cuw[j] = np.sqrt(dX)*np.linalg.norm(uc - ur_comp, 2)
+            un_cc = [i for i in un for j in range(int(dX/dx))]
+            uc_cc = [i for i in uc for j in range(int(dX/dx))]
+            error_nt[j] = np.sqrt(dX)*np.linalg.norm(un_cc - ur[1:-1],norm)
+            error_cuw[j] = np.sqrt(dX)*np.linalg.norm(uc_cc - ur[1:-1],norm)
             j += 1
     
     if method == 'classical':
@@ -317,9 +307,25 @@ def Error_verification(method, initial):
         plt.ylabel("Error")
         plt.xlabel("dx")
         if initial=='dis':
-            plt.savefig("Error_classical_disc.pdf")
+            if norm == 1:
+                plt.title("Error in 1-norm")
+                plt.savefig("Error_classical_disc1.pdf")
+            elif norm == 2:
+                plt.title("Error in 2-norm")
+                plt.savefig("Error_classical_disc2.pdf")
+            elif norm == np.inf:
+                plt.title("Error in inf-norm")
+                plt.savefig("Error_classical_disc_inf.pdf")
         elif initial=='cont':
-            plt.savefig("Error_classical_cont.pdf")
+            if norm == 1:
+                plt.title("Error in 1-norm")
+                plt.savefig("Error_classical_cont1.pdf")
+            elif norm == 2:
+                plt.title("Error in 2-norm")
+                plt.savefig("Error_classical_cont2.pdf")
+            elif norm == np.inf:
+                plt.title("Error in inf-norm")
+                plt.savefig("Error_classical_cont_inf.pdf")
     elif method == 'high':
         plt.figure()
         plt.loglog([1/i for i in N],error_nt)
@@ -328,11 +334,27 @@ def Error_verification(method, initial):
         plt.ylabel("Error")
         plt.xlabel("dx")
         if initial=='dis':
-            plt.savefig("Error_high_disc.pdf")
+            if norm == 1:
+                plt.title("Error in 1-norm")
+                plt.savefig("Error_high_disc1.pdf")
+            elif norm == 2:
+                plt.title("Error in 2-norm")
+                plt.savefig("Error_high_disc2.pdf")
+            elif norm == np.inf:
+                plt.title("Error in inf-norm")
+                plt.savefig("Error_high_disc_inf.pdf")
         elif initial=='cont':
-            plt.savefig("Error_high_cont.pdf")
+            if norm == 1:
+                plt.title("Error in 1-norm")
+                plt.savefig("Error_high_cont1.pdf")
+            elif norm == 2:
+                plt.title("Error in 2-norm")
+                plt.savefig("Error_high_cont2.pdf")
+            elif norm == np.inf:
+                plt.title("Error in inf-norm")
+                plt.savefig("Error_high_cont_inf.pdf")
             
+     
             
-            
-Error_verification('classical','dis')
+Error_verification('high','dis',1)
 #BL_solution('classical','dis')

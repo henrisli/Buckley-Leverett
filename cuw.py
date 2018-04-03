@@ -37,14 +37,8 @@ def cuw(u0, cfl, dx, T, flux, dflux, boundary, lim = None):
         ur = u + 0.5*phi
         fr = flux(ur)
         dfr = dflux(ur)
-        ul = u - 0.5*phi
-        fl = flux(ul)
-        dfl = dflux(ul)
-        ap = np.maximum(np.maximum(dfr,dfl),0)
-        am = np.minimum(np.minimum(dfr,dfl),0)
-        mdf = np.maximum(ap,-am)
-        mdf = max(mdf)
-        f[j] = np.divide(ap[j]*fr[j] - am[j+1]*fl[j+1] + ap[j]*am[j+1]*(ul[j+1] - ur[j]), (ap[j]-am[j+1]+1e-6))
+        mdf = max(dfr)
+        f[j] = fr[j]
         U[i] = u[i] - dt/dx*(f[i]-f[i-1])
           
         U = boundary(U,2)
@@ -57,15 +51,14 @@ def cuw(u0, cfl, dx, T, flux, dflux, boundary, lim = None):
         ur = U + 0.5*phi
         fr = flux(ur)
         dfr = dflux(ur)
-        ul = U - 0.5*phi
-        fl = flux(ul)
-        dfl = dflux(ul)
-        ap = np.maximum(np.maximum(dfr, dfl), 0)
-        am = np.minimum(np.minimum(dfr, dfl), 0)
-        mdf = np.maximum(np.maximum(ap, -am), mdf)
+        mdf = np.maximum(dfr, mdf)
         mdf = max(mdf)
-        f[j] = (ap[j]*fr[j] - am[j+1]*fl[j+1] + ap[j]*am[j+1]*(ul[j+1] - ur[j]))/ (ap[j]-am[j+1]+1e-6);
-    
+        f[j] = fr[j]
         u[i] = 0.5*u[i] + 0.5*( U[i]-dt/dx*(f[i]-f[i-1]) )
         dt = cfl*dx/mdf
-    return u
+    u = boundary(u, 2)
+    du = np.diff(u)
+    phi[1:-1] = limiter(du[:-1], du[1:])
+    phi[0] = phi[-2]
+    phi[-1] = phi[1]
+    return u, phi

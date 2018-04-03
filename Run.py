@@ -97,10 +97,11 @@ def Advection_high_resolution_schemes():
 
 # Solution of Buckley-Leverett equation, both with classical
 # and high-resolution schemes.
-def BL_solution(method, initial, M = 1):
-    T = 0.5
+# T = 1 gives a continuous solution, T = 0.5 gives a discontinuous solution.
+def BL_solution(method, T, M = 1):
     def analytical(u):
         return 1/2*(np.sqrt(np.divide(-2/(T*M)*u + np.sqrt(4/(T*M)*u + 1) - 1, 1/(T*M)*u) + 1) + 1)*np.logical_not(u>((1/2 + 1/np.sqrt(2))*T))
+    
     # Flux function
     def f(u):
         return np.divide(np.power(u,2),np.power(u,2) + M*np.power(1-u,2))
@@ -115,16 +116,16 @@ def BL_solution(method, initial, M = 1):
     # Reference solution
     dx = 1/2**12
     xr = np.arange(-0.5*dx,1+1.5*dx,dx)
-    # Discontinuous initial:
-    if initial == 'dis':
+    # Discontinuous solution:
+    if T == 0.5:
         u0 = np.zeros(len(xr))
         u0[xr<=0]=1.0
-    # Continuous initial:
-    elif initial == 'cont':
-        u0 = np.sin((xr-0.1)*np.pi/0.3)**2
-        u0[(xr<0.1) | (xr>0.4)] = 0
+    # Continuous solution:
+    elif T == 1:
+        u0 = np.ones(len(xr))*analytical(1)
+        u0[xr<=0.0]=1.0
         
-    ur = upw(u0, 0.995, dx, T, f, df, outflow)
+    #ur = upw(u0, 0.995, dx, T, f, df, outflow)
     
      # Solutions on coarser grids
     N  = 50
@@ -133,14 +134,14 @@ def BL_solution(method, initial, M = 1):
     if method == 'classical':
        
         x  = np.arange(-0.5*dx,1+1.5*dx,dx)
-        # Discontinuous initial:
-        if initial == 'dis':
+        # Discontinuous solution:
+        if T == 0.5:
             u0 = np.zeros(len(x))
-            u0[x<=0]=1.0
+            u0[x<=0] = 1.0
         # Continuous initial:
-        elif initial == 'cont':
-            u0 = np.sin((x-0.1)*np.pi/0.3)**2
-            u0[(x<0.1) | (x>0.4)] = 0
+        elif T == 1:
+            u0 = np.ones(len(x))*analytical(1)
+            u0[x<=0] = 1.0
         
         uu = upw(u0, .995, dx, T, f, df, outflow)
         uf = lxf(u0, .995, dx, T, f, df, outflow)
@@ -171,53 +172,58 @@ def BL_solution(method, initial, M = 1):
         plt.plot(xr[1:-1], analytical(xr[1:-1]), color = 'red')
         plt.plot(x[1:-1],uw[1:-1],'.', markersize = 3)
         plt.title("Lax-Wendroff")
-        if initial == 'cont':
+        if T == 1:
             plt.savefig("solution_classical_cont.pdf")
-        elif initial == 'dis':
+        elif T == 0.5:
             plt.savefig("solution_classical_discont.pdf")
     
     elif method == 'high':
         
         xh = np.arange(-1.5*dx, 1 + 2.5*dx, dx)
         
-        # Discontinuous initial:
-        if initial == 'dis':
+        # Discontinuous solution:
+        if T == 0.5:
             u0 = np.zeros(len(xh))
-            u0[xh<0.1]=1.0
+            u0[xh<=0] = 1.0
         # Continuous initial:
-        if initial == 'cont':
-            u0 = np.sin((xh-0.1)*np.pi/0.3)**2
-            u0[(xh<0.1) | (xh>0.4)] = 0
+        elif T == 1:
+            u0 = np.ones(len(xh))*analytical(1)
+            u0[xh<=0] = 1.0
             
-            
-        uc = cuw(u0, 0.495, dx, 0.5, f, df, inflow)
-        un = nt(u0, 0.495, dx, 0.5, f, df, inflow)
+        uc, phi = cuw(u0, 0.495, dx, T, f, df, outflow)
+        un = nt(u0, 0.495, dx, T, f, df, outflow)
         
         #Plot results
         plt.figure()
         plt.plot([1,2])
         plt.subplot(121)
-        plt.plot(xr[1:-1],ur[1:-1])
+        # Reference:
+        #plt.plot(xr[1:-1], ur[1:-1])
+        # Analytical:
+        plt.plot(xr[1:-1], analytical(xr[1:-1]), color = 'red')
         plt.plot(xh[2:-2],uc[2:-2], '.', markersize = 3)
         plt.title("Central upwind")
         plt.subplot(122)
-        plt.plot(xr[1:-1],ur[1:-1])
+        # Reference:
+        #plt.plot(xr[1:-1], ur[1:-1])
+        # Analytical:
+        plt.plot(xr[1:-1], analytical(xr[1:-1]), color = 'red')
         plt.plot(xh[2:-2],un[2:-2], '.', markersize = 3)
         plt.title("Nessyahu-Tadmor")
-        if initial == 'cont':
-            plt.savefig("solution_high_cont.pdf")
-        elif initial == 'dis':
+        if T == 0.5:
             plt.savefig("solution_high_discont.pdf")
+        elif T == 1:
+            plt.savefig("solution_high_cont.pdf")
 
 
-def Error_verification(method, initial, norm):
-    T = 1
+def Error_verification(method, T, norm):
     def analytical(u):
         return 1/2*(np.sqrt(np.divide(-2/T*u + np.sqrt(4/T*u + 1) - 1, 1/T*u) + 1) + 1)*np.logical_not(u>((1/2 + 1/np.sqrt(2))*T))
-    
+  
     # BL flux function:
     def f(u):
         return np.divide(np.power(u,2),np.power(u,2) + np.power(1-u,2))
+    
     # Derivative of flux for BL:
     s = np.linspace(0,1,501)
     dfv = max(np.diff(f(s))/np.diff(s))
@@ -226,22 +232,8 @@ def Error_verification(method, initial, norm):
     # Reference solution
     dx = 1/2**12
     xr = np.arange(-0.5*dx,1+1.5*dx,dx)
-    # Discontinuous initial:
-    if initial == 'dis':
-        u0 = np.zeros(len(xr))
-        u0[xr<=0.0]=1.0
-        
-    # Continuous initial:
-    elif initial == 'cont':
-        u0 = np.sin(xr*np.pi/0.3)**2
-        u0[xr>0.3] = 0
-    
-    ur = upw(u0, .995, dx, T, f, df, outflow)
-    ua = analytical(xr)
-    if initial == 'cont':
-        uref = ur
-    else:
-        uref = ua
+            
+    uref = analytical(xr)
     
     # Solutions on coarser grids
     N = np.array([2**i for i in range(1,9)])
@@ -260,15 +252,14 @@ def Error_verification(method, initial, norm):
         if method == 'classical':
             x  = np.arange(-0.5*dX,1+1.5*dX,dX)
             
-            # Discontinuous initial:
-            if initial == 'dis':
+            # Discontinuous solution:
+            if T == 0.5:
                 u0 = np.zeros(len(x))
-                u0[x<=0.0]=1.0
-                
+                u0[x<=0] = 1.0
             # Continuous initial:
-            elif initial == 'cont':
-                u0 = np.sin(x*np.pi/0.3)**2
-                u0[x>0.3] = 0
+            elif T == 1:
+                u0 = np.ones(len(x))*analytical(1)
+                u0[x<=0] = 1.0
                 
             uu = upw(u0, .995, dX, T, f, df, outflow)
             uu = uu[1:-1]
@@ -279,43 +270,44 @@ def Error_verification(method, initial, norm):
             uu_cc = [i for i in uu for j in range(int(dX/dx))]
             uf_cc = [i for i in uf for j in range(int(dX/dx))]
             uw_cc = [i for i in uw for j in range(int(dX/dx))]
-            error_upw[j] = np.sqrt(dX)*np.linalg.norm(uu_cc - uref[1:-1],norm)
-            error_lxf[j] = np.sqrt(dX)*np.linalg.norm(uf_cc - uref[1:-1],norm)
-            error_lxw[j] = np.sqrt(dX)*np.linalg.norm(uw_cc - uref[1:-1],norm)
+            error_upw[j] = np.power(dX,1/norm)*np.linalg.norm(uu_cc - uref[1:-1],norm)
+            error_lxf[j] = np.power(dX,1/norm)*np.linalg.norm(uf_cc - uref[1:-1],norm)
+            error_lxw[j] = np.power(dX,1/norm)*np.linalg.norm(uw_cc - uref[1:-1],norm)
             j += 1
             
         elif method == "high":
+            
             xh = np.arange(-1.5*dX, 1 + 2.5*dX, dX)
             
-            # Discontinuous initial:
-            if initial == 'dis':
+            # Discontinuous solution:
+            if T == 0.5:
                 u0 = np.zeros(len(xh))
-                u0[xh<=0]=1.0
-                
-            # Continuous initial:
-            elif initial == 'cont':
-                u0 = np.sin(xh*np.pi/0.3)**2
-                u0[xh>0.3] = 0
+                u0[xh<=0] = 1.0
+            # Continuous solution:
+            elif T == 1:
+                u0 = np.ones(len(xh))*analytical(1)
+                u0[xh<=0] = 1.0
                 
             un = nt(u0, .495, dX, T, f, df, outflow)
             un = un[2:-2]
-            uc = cuw(u0, .495, dX, T, f, df, outflow)
+            uc, phi = cuw(u0, .495, dX, T, f, df, outflow)
             uc = uc[2:-2]
+            phi = phi[2:-2]
             un_cc = [i for i in un for j in range(int(dX/dx))]
-            uc_cc = [i for i in uc for j in range(int(dX/dx))]
-            error_nt[j] = np.sqrt(dX)*np.linalg.norm(un_cc - uref[1:-1],norm)
-            error_cuw[j] = np.sqrt(dX)*np.linalg.norm(uc_cc - uref[1:-1],norm)
+            uc_cc = [uc[i]+0.5*(((2*j+1)-int(dX/dx)))/int(dX/dx)*phi[i] for i in range(len(uc)) for j in range(int(dX/dx))]
+            error_nt[j] = np.power(dX,1/norm)*np.linalg.norm(un_cc - uref[1:-1],norm)
+            error_cuw[j] = np.power(dX,1/norm)*np.linalg.norm(uc_cc - uref[1:-1],norm)
             j += 1
     
     if method == 'classical':
         plt.figure()
-        plt.loglog([1/i for i in N],error_upw)
-        plt.loglog([1/i for i in N],error_lxf)
-        plt.loglog([1/i for i in N],error_lxw)
+        plt.loglog([1/i for i in N],error_upw,'o-')
+        plt.loglog([1/i for i in N],error_lxf,'o-')
+        plt.loglog([1/i for i in N],error_lxw,'o-')
         plt.legend(["UW","LF","LW"])
         plt.ylabel("Error")
         plt.xlabel("dx")
-        if initial=='dis':
+        if T == 0.5:
             if norm == 1:
                 plt.title("Error in 1-norm")
                 plt.savefig("Error_classical_disc1.pdf")
@@ -325,7 +317,7 @@ def Error_verification(method, initial, norm):
             elif norm == np.inf:
                 plt.title("Error in inf-norm")
                 plt.savefig("Error_classical_disc_inf.pdf")
-        elif initial=='cont':
+        elif T == 1:
             if norm == 1:
                 plt.title("Error in 1-norm")
                 plt.savefig("Error_classical_cont1.pdf")
@@ -335,6 +327,7 @@ def Error_verification(method, initial, norm):
             elif norm == np.inf:
                 plt.title("Error in inf-norm")
                 plt.savefig("Error_classical_cont_inf.pdf")
+    
     elif method == 'high':
         plt.figure()
         plt.loglog([1/i for i in N],error_nt)
@@ -342,7 +335,7 @@ def Error_verification(method, initial, norm):
         plt.legend(["NT","CUW"])
         plt.ylabel("Error")
         plt.xlabel("dx")
-        if initial=='dis':
+        if T == 0.5:
             if norm == 1:
                 plt.title("Error in 1-norm")
                 plt.savefig("Error_high_disc1.pdf")
@@ -352,7 +345,7 @@ def Error_verification(method, initial, norm):
             elif norm == np.inf:
                 plt.title("Error in inf-norm")
                 plt.savefig("Error_high_disc_inf.pdf")
-        elif initial=='cont':
+        elif T == 1:
             if norm == 1:
                 plt.title("Error in 1-norm")
                 plt.savefig("Error_high_cont1.pdf")
@@ -365,5 +358,5 @@ def Error_verification(method, initial, norm):
             
      
             
-Error_verification('high', 'dis', np.inf)
-#BL_solution('classical','dis')
+Error_verification('classical', 0.5, np.inf)
+BL_solution('classical', 0.5)

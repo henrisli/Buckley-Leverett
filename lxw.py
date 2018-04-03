@@ -18,7 +18,7 @@ def lxw(u0, cfl, dx, T, flux, df, boundary):
         t += dt
         u = boundary(u)
         f = flux(u)
-        U[i] = 0.5*(u[i]+u[i+1]) - 0.5*dt/dx*(f[i+1]-f[i])
+        U[i] = 0.5*(u[i]+u[i+1]) - 0.5*dt/dx*(f[i+1]-f[i]) #Tar vekk 0.5 får mye bedre oppførsel??
         U = boundary(U)
         f = flux(U)
         u[i] = u[i] - dt/dx*(f[i]-f[i-1])

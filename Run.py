@@ -330,8 +330,8 @@ def Error_verification(method, T, norm):
     
     elif method == 'high':
         plt.figure()
-        plt.loglog([1/i for i in N],error_nt)
-        plt.loglog([1/i for i in N],error_cuw)
+        plt.loglog([1/i for i in N],error_nt, 'o-')
+        plt.loglog([1/i for i in N],error_cuw, 'o-')
         plt.legend(["NT","CUW"])
         plt.ylabel("Error")
         plt.xlabel("dx")
@@ -358,5 +358,5 @@ def Error_verification(method, T, norm):
             
      
             
-Error_verification('classical', 0.5, np.inf)
-BL_solution('classical', 0.5)
+Error_verification('high', 1, 1)
+#BL_solution('classical', 0.5)

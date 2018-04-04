@@ -5,6 +5,7 @@ Created on Tue Mar  6 14:14:04 2018
 @author: henri
 """
 
+
 def periodic(u, n=0):
     if n == 0:
         u[0] = u[-2]

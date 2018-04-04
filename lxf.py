@@ -7,6 +7,7 @@ Created on Tue Mar  6 13:47:06 2018
 
 import numpy as np
 
+
 def lxf(u0, cfl, dx, T, flux, df, boundary):
     u = np.copy(u0)
     t = 0.0

@@ -166,16 +166,19 @@ def BL_solution(method, T, M = 1):
         plt.plot(x[1:-1],uf[1:-1],'.', markersize = 3)
         plt.title("Lax-Friedrichs")
         plt.subplot(133)
+        
         # Reference:
         #plt.plot(xr[1:-1], ur[1:-1], 'o')
         # Analytical:
         plt.plot(xr[1:-1], analytical(xr[1:-1]), color = 'red')
-        plt.plot(x[1:-1],uw[1:-1],'.', markersize = 3)
+        plt.plot(x[1:-1],uf[1:-1],'.', markersize = 3)
         plt.title("Lax-Wendroff")
+        
         if T == 1:
             plt.savefig("solution_classical_cont.pdf")
         elif T == 0.5:
             plt.savefig("solution_classical_discont.pdf")
+   
     
     elif method == 'high':
         
@@ -234,9 +237,9 @@ def Error_verification(method, T, norm):
     xr = np.arange(-0.5*dx,1+1.5*dx,dx)
             
     uref = analytical(xr)
-    
+  
     # Solutions on coarser grids
-    N = np.array([2**i for i in range(1,9)])
+    N = np.array([2**i for i in range(3,11)])
 
     
     if method == 'classical':
@@ -294,6 +297,9 @@ def Error_verification(method, T, norm):
             uc = uc[2:-2]
             phi = phi[2:-2]
             un_cc = [i for i in un for j in range(int(dX/dx))]
+            # To compute the numerical error in the central upwind scheme, we need
+            # to create a piecewise continuous linear reconstruction of the solution.
+            # To do this, we use the vector phi and then create the reconstruction.
             uc_cc = [uc[i]+0.5*(((2*j+1)-int(dX/dx)))/int(dX/dx)*phi[i] for i in range(len(uc)) for j in range(int(dX/dx))]
             error_nt[j] = np.power(dX,1/norm)*np.linalg.norm(un_cc - uref[1:-1],norm)
             error_cuw[j] = np.power(dX,1/norm)*np.linalg.norm(uc_cc - uref[1:-1],norm)
@@ -301,12 +307,13 @@ def Error_verification(method, T, norm):
     
     if method == 'classical':
         plt.figure()
-        plt.loglog([1/i for i in N],error_upw,'o-')
-        plt.loglog([1/i for i in N],error_lxf,'o-')
-        plt.loglog([1/i for i in N],error_lxw,'o-')
+        plt.axis('equal')
+        plt.loglog(np.divide(1,N),error_upw,'o-')
+        plt.loglog(np.divide(1,N),error_lxf,'o-')
+        plt.loglog(np.divide(1,N),error_lxw,'o-')
         plt.legend(["UW","LF","LW"])
         plt.ylabel("Error")
-        plt.xlabel("dx")
+        plt.xlabel("h")
         if T == 0.5:
             if norm == 1:
                 plt.title("Error in 1-norm")
@@ -330,11 +337,12 @@ def Error_verification(method, T, norm):
     
     elif method == 'high':
         plt.figure()
-        plt.loglog([1/i for i in N],error_nt, 'o-')
-        plt.loglog([1/i for i in N],error_cuw, 'o-')
+        plt.axis('equal')
+        plt.loglog(np.divide(1,N), error_nt, 'o-')
+        plt.loglog(np.divide(1,N), error_cuw, 'o-')
         plt.legend(["NT","CUW"])
         plt.ylabel("Error")
-        plt.xlabel("dx")
+        plt.xlabel("h")
         if T == 0.5:
             if norm == 1:
                 plt.title("Error in 1-norm")
@@ -355,8 +363,7 @@ def Error_verification(method, T, norm):
             elif norm == np.inf:
                 plt.title("Error in inf-norm")
                 plt.savefig("Error_high_cont_inf.pdf")
-            
      
             
-Error_verification('high', 1, 1)
-#BL_solution('classical', 0.5)
+#Error_verification('high', 0.5, 2)
+BL_solution('classical', 0.5)

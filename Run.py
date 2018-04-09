@@ -171,7 +171,7 @@ def BL_solution(method, T, M = 1):
         #plt.plot(xr[1:-1], ur[1:-1], 'o')
         # Analytical:
         plt.plot(xr[1:-1], analytical(xr[1:-1]), color = 'red')
-        plt.plot(x[1:-1],uf[1:-1],'.', markersize = 3)
+        plt.plot(x[1:-1],uw[1:-1],'.', markersize = 3)
         plt.title("Lax-Wendroff")
         
         if T == 1:
@@ -291,16 +291,17 @@ def Error_verification(method, T, norm):
                 u0 = np.ones(len(xh))*analytical(1)
                 u0[xh<=0] = 1.0
                 
-            un = nt(u0, .495, dX, T, f, df, outflow)
+            un, s = nt(u0, .495, dX, T, f, df, outflow)
             un = un[2:-2]
+            s = s[2:-2]
             uc, phi = cuw(u0, .495, dX, T, f, df, outflow)
             uc = uc[2:-2]
             phi = phi[2:-2]
-            un_cc = [i for i in un for j in range(int(dX/dx))]
             # To compute the numerical error in the central upwind scheme, we need
             # to create a piecewise continuous linear reconstruction of the solution.
             # To do this, we use the vector phi and then create the reconstruction.
             uc_cc = [uc[i]+0.5*(((2*j+1)-int(dX/dx)))/int(dX/dx)*phi[i] for i in range(len(uc)) for j in range(int(dX/dx))]
+            un_cc = [un[i]+0.5*(((2*j+1)-int(dX/dx)))/int(dX/dx)*s[i] for i in range(len(un)) for j in range(int(dX/dx))]
             error_nt[j] = np.power(dX,1/norm)*np.linalg.norm(un_cc - uref[1:-1],norm)
             error_cuw[j] = np.power(dX,1/norm)*np.linalg.norm(uc_cc - uref[1:-1],norm)
             j += 1
@@ -365,5 +366,5 @@ def Error_verification(method, T, norm):
                 plt.savefig("Error_high_cont_inf.pdf")
      
             
-#Error_verification('high', 0.5, 2)
-BL_solution('classical', 0.5)
+Error_verification('high', 1, 2)
+#BL_solution('classical', 0.5)

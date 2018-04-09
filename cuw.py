@@ -30,8 +30,7 @@ def cuw(u0, cfl, dx, T, flux, dflux, boundary, lim = None):
         t += dt
         u = boundary(u, 2)
         du = np.diff(u)
-        phi[1:-1] = limiter(du[:-1], du[1:])
-        # Only when we have periodic boundary conditions: 
+        phi[1:-1] = limiter(du[:-1], du[1:]) 
         phi[0] = phi[-2]
         phi[-1] = phi[1]  
         ur = u + 0.5*phi
@@ -44,10 +43,8 @@ def cuw(u0, cfl, dx, T, flux, dflux, boundary, lim = None):
         U = boundary(U,2)
         du = np.diff(U)
         phi[1:-1] = limiter(du[:-1], du[1:])
-        # Only when we have periodic boundary conditions: 
         phi[0] = phi[-2]
-        phi[-1] = phi[1]
-        
+        phi[-1] = phi[1]  
         ur = U + 0.5*phi
         fr = flux(ur)
         dfr = dflux(ur)

@@ -11,7 +11,7 @@ from upw import upw
 from lxf import lxf
 from lxw import lxw
 from Nessyahu_Tadmor import nt
-from cuw import cuw
+from god import god
 from outflow import outflow
 from inflow import inflow
 from periodic import periodic
@@ -193,33 +193,21 @@ def BL_solution(method, T, M = 1):
             u0 = np.ones(len(xh))*analytical(1)
             u0[xh<=0] = 1.0
             
-        uc, phi = cuw(u0, 0.495, dx, T, f, df, outflow)
-        un = nt(u0, 0.495, dx, T, f, df, outflow)
+        ug, phi = god(u0, 0.495, dx, T, f, df, outflow)
         
         #Plot results
         plt.figure()
-        plt.plot([1,2])
-        plt.subplot(121)
-        # Reference:
-        #plt.plot(xr[1:-1], ur[1:-1])
         # Analytical:
         plt.plot(xr[1:-1], analytical(xr[1:-1]), color = 'red')
-        plt.plot(xh[2:-2],uc[2:-2], '.', markersize = 3)
-        plt.title("Central upwind")
-        plt.subplot(122)
-        # Reference:
-        #plt.plot(xr[1:-1], ur[1:-1])
-        # Analytical:
-        plt.plot(xr[1:-1], analytical(xr[1:-1]), color = 'red')
-        plt.plot(xh[2:-2],un[2:-2], '.', markersize = 3)
-        plt.title("Nessyahu-Tadmor")
+        plt.plot(xh[2:-2], ug[2:-2], '.', markersize = 3)
+        plt.title("Godunov")
         if T == 0.5:
             plt.savefig("solution_high_discont.pdf")
         elif T == 1:
             plt.savefig("solution_high_cont.pdf")
 
 
-def Error_verification(method, T, norm):
+def Error_verification(T, norm):
     def analytical(u):
         return 1/2*(np.sqrt(np.divide(-2/T*u + np.sqrt(4/T*u + 1) - 1, 1/T*u) + 1) + 1)*np.logical_not(u>((1/2 + 1/np.sqrt(2))*T))
   
@@ -241,130 +229,84 @@ def Error_verification(method, T, norm):
     # Solutions on coarser grids
     N = np.array([2**i for i in range(3,11)])
 
-    
-    if method == 'classical':
-        error_upw = np.zeros(len(N))
-        error_lxf = np.zeros(len(N))
-        error_lxw = np.zeros(len(N))
-    elif method == 'high':
-        error_nt = np.zeros(len(N))
-        error_cuw = np.zeros(len(N))
+
+    error_upw = np.zeros(len(N))
+    error_lxf = np.zeros(len(N))
+    error_lxw = np.zeros(len(N))
+    error_god = np.zeros(len(N))
     j = 0
     for n in N:
         dX = 1/n
-        if method == 'classical':
-            x  = np.arange(-0.5*dX,1+1.5*dX,dX)
-            
-            # Discontinuous solution:
-            if T == 0.5:
-                u0 = np.zeros(len(x))
-                u0[x<=0] = 1.0
-            # Continuous initial:
-            elif T == 1:
-                u0 = np.ones(len(x))*analytical(1)
-                u0[x<=0] = 1.0
-                
-            uu = upw(u0, .995, dX, T, f, df, outflow)
-            uu = uu[1:-1]
-            uf = lxf(u0, .995, dX, T, f, df, outflow)
-            uf = uf[1:-1]
-            uw = lxw(u0, .995, dX, T, f, df, outflow)
-            uw = uw[1:-1]
-            uu_cc = [i for i in uu for j in range(int(dX/dx))]
-            uf_cc = [i for i in uf for j in range(int(dX/dx))]
-            uw_cc = [i for i in uw for j in range(int(dX/dx))]
-            error_upw[j] = np.power(dX,1/norm)*np.linalg.norm(uu_cc - uref[1:-1],norm)
-            error_lxf[j] = np.power(dX,1/norm)*np.linalg.norm(uf_cc - uref[1:-1],norm)
-            error_lxw[j] = np.power(dX,1/norm)*np.linalg.norm(uw_cc - uref[1:-1],norm)
-            j += 1
-            
-        elif method == "high":
-            
-            xh = np.arange(-1.5*dX, 1 + 2.5*dX, dX)
-            
-            # Discontinuous solution:
-            if T == 0.5:
-                u0 = np.zeros(len(xh))
-                u0[xh<=0] = 1.0
-            # Continuous solution:
-            elif T == 1:
-                u0 = np.ones(len(xh))*analytical(1)
-                u0[xh<=0] = 1.0
-                
-            un, s = nt(u0, .495, dX, T, f, df, outflow)
-            un = un[2:-2]
-            s = s[2:-2]
-            uc, phi = cuw(u0, .495, dX, T, f, df, outflow)
-            uc = uc[2:-2]
-            phi = phi[2:-2]
-            # To compute the numerical error in the central upwind scheme, we need
-            # to create a piecewise continuous linear reconstruction of the solution.
-            # To do this, we use the vector phi and then create the reconstruction.
-            uc_cc = [uc[i]+0.5*(((2*j+1)-int(dX/dx)))/int(dX/dx)*phi[i] for i in range(len(uc)) for j in range(int(dX/dx))]
-            un_cc = [un[i]+0.5*(((2*j+1)-int(dX/dx)))/int(dX/dx)*s[i] for i in range(len(un)) for j in range(int(dX/dx))]
-            error_nt[j] = np.power(dX,1/norm)*np.linalg.norm(un_cc - uref[1:-1],norm)
-            error_cuw[j] = np.power(dX,1/norm)*np.linalg.norm(uc_cc - uref[1:-1],norm)
-            j += 1
-    
-    if method == 'classical':
-        plt.figure()
-        plt.axis('equal')
-        plt.loglog(np.divide(1,N),error_upw,'o-')
-        plt.loglog(np.divide(1,N),error_lxf,'o-')
-        plt.loglog(np.divide(1,N),error_lxw,'o-')
-        plt.legend(["UW","LF","LW"])
-        plt.ylabel("Error")
-        plt.xlabel("h")
+        x  = np.arange(-0.5*dX,1+1.5*dX,dX)
+        xg = np.arange(-1.5*dX, 1 + 2.5*dX, dX)
+        
+        # Discontinuous solution:
         if T == 0.5:
-            if norm == 1:
-                plt.title("Error in 1-norm")
-                plt.savefig("Error_classical_disc1.pdf")
-            elif norm == 2:
-                plt.title("Error in 2-norm")
-                plt.savefig("Error_classical_disc2.pdf")
-            elif norm == np.inf:
-                plt.title("Error in inf-norm")
-                plt.savefig("Error_classical_disc_inf.pdf")
+            u0 = np.zeros(len(x))
+            u0_g = np.zeros(len(xg))
+            u0[x<=0] = 1.0
+            u0_g[xg<=0] = 1.0
+        # Continuous initial:
         elif T == 1:
-            if norm == 1:
-                plt.title("Error in 1-norm")
-                plt.savefig("Error_classical_cont1.pdf")
-            elif norm == 2:
-                plt.title("Error in 2-norm")
-                plt.savefig("Error_classical_cont2.pdf")
-            elif norm == np.inf:
-                plt.title("Error in inf-norm")
-                plt.savefig("Error_classical_cont_inf.pdf")
-    
-    elif method == 'high':
-        plt.figure()
-        plt.axis('equal')
-        plt.loglog(np.divide(1,N), error_nt, 'o-')
-        plt.loglog(np.divide(1,N), error_cuw, 'o-')
-        plt.legend(["NT","CUW"])
-        plt.ylabel("Error")
-        plt.xlabel("h")
-        if T == 0.5:
-            if norm == 1:
-                plt.title("Error in 1-norm")
-                plt.savefig("Error_high_disc1.pdf")
-            elif norm == 2:
-                plt.title("Error in 2-norm")
-                plt.savefig("Error_high_disc2.pdf")
-            elif norm == np.inf:
-                plt.title("Error in inf-norm")
-                plt.savefig("Error_high_disc_inf.pdf")
-        elif T == 1:
-            if norm == 1:
-                plt.title("Error in 1-norm")
-                plt.savefig("Error_high_cont1.pdf")
-            elif norm == 2:
-                plt.title("Error in 2-norm")
-                plt.savefig("Error_high_cont2.pdf")
-            elif norm == np.inf:
-                plt.title("Error in inf-norm")
-                plt.savefig("Error_high_cont_inf.pdf")
+            u0 = np.ones(len(x))*analytical(1)
+            u0_g = np.ones(len(xg))*analytical(1)
+            u0[x<=0] = 1.0
+            u0_g[xg<=0] = 1.0
+            
+        uu = upw(u0, .995, dX, T, f, df, outflow)
+        uu = uu[1:-1]
+        uf = lxf(u0, .995, dX, T, f, df, outflow)
+        uf = uf[1:-1]
+        uw = lxw(u0, .995, dX, T, f, df, outflow)
+        uw = uw[1:-1]
+        ug, phi = god(u0_g, .495, dX, T, f, df, outflow)
+        ug = ug[2:-2]
+        phi = phi[2:-2]
+        # Now create a constant reconstruction to compute error for the three
+        # classical schemes.
+        uu_c = [i for i in uu for j in range(int(dX/dx))]
+        uf_c = [i for i in uf for j in range(int(dX/dx))]
+        uw_c = [i for i in uw for j in range(int(dX/dx))]
+        # To compute the numerical error in the central upwind scheme, we need
+        # to create a piecewise continuous linear reconstruction of the solution.
+        # To do this, we use the vector phi and then create the reconstruction.
+        ug_c = [ug[i]+0.5*(((2*j+1)-int(dX/dx)))/int(dX/dx)*phi[i] for i in range(len(ug)) for j in range(int(dX/dx))]
+        error_upw[j] = np.power(dX,1/norm)*np.linalg.norm(uu_c - uref[1:-1],norm)
+        error_lxf[j] = np.power(dX,1/norm)*np.linalg.norm(uf_c - uref[1:-1],norm)
+        error_lxw[j] = np.power(dX,1/norm)*np.linalg.norm(uw_c - uref[1:-1],norm)
+        error_god[j] = np.power(dX,1/norm)*np.linalg.norm(ug_c - uref[1:-1],norm)
+        j += 1
+            
+    plt.figure()
+    plt.axis('equal')
+    plt.loglog(np.divide(1,N),error_upw,'o-')
+    plt.loglog(np.divide(1,N),error_lxf,'o-')
+    plt.loglog(np.divide(1,N),error_lxw,'o-')
+    plt.loglog(np.divide(1,N), error_god, 'o-')
+    plt.legend(["UW","LF","LW","God"])
+    plt.ylabel("Error")
+    plt.xlabel("h")
+    if T == 0.5:
+        if norm == 1:
+            plt.title("Error in 1-norm")
+            plt.savefig("Error_disc1.pdf")
+        elif norm == 2:
+            plt.title("Error in 2-norm")
+            plt.savefig("Error_disc2.pdf")
+        elif norm == np.inf:
+            plt.title("Error in inf-norm")
+            plt.savefig("Error_disc_inf.pdf")
+    elif T == 1:
+        if norm == 1:
+            plt.title("Error in 1-norm")
+            plt.savefig("Error_cont1.pdf")
+        elif norm == 2:
+            plt.title("Error in 2-norm")
+            plt.savefig("Error_cont2.pdf")
+        elif norm == np.inf:
+            plt.title("Error in inf-norm")
+            plt.savefig("Error_cont_inf.pdf")
      
             
-Error_verification('high', 1, 2)
-#BL_solution('classical', 0.5)
+Error_verification(0.5, np.inf)
+#BL_solution('high', 1)

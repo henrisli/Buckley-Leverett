@@ -115,7 +115,7 @@ def BL_solution(method, T, M = 1):
     
     # Reference solution
     dx = 1/2**12
-    xr = np.arange(-0.5*dx,1+1.5*dx,dx)
+    xr = np.arange(0.5*dx,1+0.5*dx,dx)
     # Discontinuous solution:
     if T == 0.5:
         u0 = np.zeros(len(xr))
@@ -155,14 +155,14 @@ def BL_solution(method, T, M = 1):
         # Reference:
         #plt.plot(xr[1:-1], ur[1:-1], 'o')
         # Analytical:
-        plt.plot(xr[1:-1], analytical(xr[1:-1]), color = 'red')
+        plt.plot(xr, analytical(xr), color = 'red')
         plt.plot(x[1:-1], uu[1:-1], '.', markersize = 3)
         plt.title("Upwind")
         plt.subplot(132)
         # Reference:
         #plt.plot(xr[1:-1], ur[1:-1], 'o')
         # Analytical:
-        plt.plot(xr[1:-1], analytical(xr[1:-1]), color = 'red')
+        plt.plot(xr, analytical(xr), color = 'red')
         plt.plot(x[1:-1],uf[1:-1],'.', markersize = 3)
         plt.title("Lax-Friedrichs")
         plt.subplot(133)
@@ -170,7 +170,7 @@ def BL_solution(method, T, M = 1):
         # Reference:
         #plt.plot(xr[1:-1], ur[1:-1], 'o')
         # Analytical:
-        plt.plot(xr[1:-1], analytical(xr[1:-1]), color = 'red')
+        plt.plot(xr, analytical(xr), color = 'red')
         plt.plot(x[1:-1],uw[1:-1],'.', markersize = 3)
         plt.title("Lax-Wendroff")
         
@@ -198,7 +198,7 @@ def BL_solution(method, T, M = 1):
         #Plot results
         plt.figure()
         # Analytical:
-        plt.plot(xr[1:-1], analytical(xr[1:-1]), color = 'red')
+        plt.plot(xr, analytical(xr), color = 'red')
         plt.plot(xh[2:-2], ug[2:-2], '.', markersize = 3)
         plt.title("Godunov")
         if T == 0.5:
@@ -222,7 +222,7 @@ def Error_verification(T, norm):
     
     # Reference solution
     dx = 1/2**12
-    xr = np.arange(-0.5*dx,1+1.5*dx,dx)
+    xr = np.arange(0.5*dx,1+0.5*dx,dx)
             
     uref = analytical(xr)
   
@@ -271,10 +271,10 @@ def Error_verification(T, norm):
         # to create a piecewise continuous linear reconstruction of the solution.
         # To do this, we use the vector phi and then create the reconstruction.
         ug_c = [ug[i]+0.5*(((2*j+1)-int(dX/dx)))/int(dX/dx)*phi[i] for i in range(len(ug)) for j in range(int(dX/dx))]
-        error_upw[j] = np.power(dX,1/norm)*np.linalg.norm(uu_c - uref[1:-1],norm)
-        error_lxf[j] = np.power(dX,1/norm)*np.linalg.norm(uf_c - uref[1:-1],norm)
-        error_lxw[j] = np.power(dX,1/norm)*np.linalg.norm(uw_c - uref[1:-1],norm)
-        error_god[j] = np.power(dX,1/norm)*np.linalg.norm(ug_c - uref[1:-1],norm)
+        error_upw[j] = np.power(dX,1/norm)*np.linalg.norm(uu_c - uref,norm)
+        error_lxf[j] = np.power(dX,1/norm)*np.linalg.norm(uf_c - uref,norm)
+        error_lxw[j] = np.power(dX,1/norm)*np.linalg.norm(uw_c - uref,norm)
+        error_god[j] = np.power(dX,1/norm)*np.linalg.norm(ug_c - uref,norm)
         j += 1
             
     plt.figure()
@@ -309,4 +309,4 @@ def Error_verification(T, norm):
      
             
 Error_verification(0.5, np.inf)
-#BL_solution('high', 1)
+BL_solution('high', 0.5)

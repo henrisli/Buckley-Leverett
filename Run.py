@@ -92,8 +92,8 @@ def BL_solution(method, T):
         elif T == 1:
             u0 = np.ones(len(xh))*analytical(1,T)
             u0[xh<=0] = 1.0
-            
-        ug, phi = god(u0, 0.495, dx, T, flux, df, inflow)
+        
+        ug, phi = god(u0, 0.995, dx, T, flux, df, inflow)
         
         #Plot results
         plt.figure()
@@ -206,5 +206,5 @@ def Error_verification(T, norm):
             plt.savefig("Error_cont_inf.pdf")
      
             
-Error_verification(1, 1)
-BL_solution('high', 0.5)
+Error_verification(0.5, 1)
+BL_solution('high', 1)

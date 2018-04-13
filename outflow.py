@@ -1,10 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Mar  6 13:49:05 2018
 
-@author: henri
-"""
-
-
+#We assume that the liquids float freely out of the boundary, 
 def outflow(u,*args):
     return u

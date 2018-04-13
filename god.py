@@ -1,15 +1,9 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Mar  6 15:54:42 2018
 
-@author: henri
-"""
 import numpy as np
 
-def god(u0, cfl, dx, T, flux, dflux, boundary, lim = None):
-    if lim == None:
-        def lim(r):
-            return np.maximum(0, np.minimum(1.3*r, np.minimum(0.5+0.5*r, 1.3)))
+def god(u0, cfl, dx, T, flux, dflux, boundary):
+    def lim(r):
+        return np.maximum(0, np.minimum(1.3*r, np.minimum(0.5+0.5*r, 1.3)))
     
     def limiter(a,b):
         return lim(np.divide(b, a + 1e-6))*a

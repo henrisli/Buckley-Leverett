@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Mar  6 13:48:22 2018
 
-@author: henri
-"""
 import numpy as np
 
 def lxw(u0, cfl, dx, T, flux, df, boundary):

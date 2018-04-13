@@ -1,12 +1,5 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Mar  6 13:47:06 2018
-
-@author: henri
-"""
 
 import numpy as np
-
 
 def lxf(u0, cfl, dx, T, flux, df, boundary):
     u = np.copy(u0)

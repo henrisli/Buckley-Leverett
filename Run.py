@@ -93,7 +93,7 @@ def BL_solution(method, T):
             u0 = np.ones(len(xh))*analytical(1,T)
             u0[xh<=0] = 1.0
         
-        ug, phi = god(u0, 0.995, dx, T, flux, df, inflow)
+        ug, phi = god(u0, 0.495, dx, T, flux, df, inflow)
         
         #Plot results
         plt.figure()

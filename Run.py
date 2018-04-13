@@ -150,13 +150,13 @@ def Error_verification(T, norm):
             u0[x<=0] = 1.0
             u0_g[xg<=0] = 1.0
             
-        uu = upw(u0, .995, dX, T, flux, df, inflow)
+        uu = upw(u0, 0.995, dX, T, flux, df, inflow)
         uu = uu[1:-1]
-        uf = lxf(u0, .995, dX, T, flux, df, inflow)
+        uf = lxf(u0, 0.995, dX, T, flux, df, inflow)
         uf = uf[1:-1]
-        uw = lxw(u0, .995, dX, T, flux, df, inflow)
+        uw = lxw(u0, 0.995, dX, T, flux, df, inflow)
         uw = uw[1:-1]
-        ug, phi = god(u0_g, .495, dX, T, flux, df, inflow)
+        ug, phi = god(u0_g, 0.495, dX, T, flux, df, inflow)
         ug = ug[2:-2]
         phi = phi[2:-2]
         

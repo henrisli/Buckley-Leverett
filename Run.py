@@ -216,5 +216,5 @@ def Error_verification(T, norm):
             plt.savefig("Error_cont_inf.pdf")
 
 
-Error_verification(0.5, 1)
-#BL_solution('high', 1)
+#Error_verification(0.5, 1)
+BL_solution('high', 0.5)

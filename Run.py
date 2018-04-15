@@ -207,4 +207,4 @@ def Error_verification(T, norm):
      
             
 Error_verification(0.5, 1)
-BL_solution('high', 1)
+#BL_solution('high', 1)

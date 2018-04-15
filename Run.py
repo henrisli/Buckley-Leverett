@@ -175,15 +175,25 @@ def Error_verification(T, norm):
         error_god[j] = np.power(dX,1/norm)*np.linalg.norm(ug_c - uref,norm)
         j += 1
             
+    #Rates of convergence estimates
+    roc_upw = np.mean(np.log(error_upw[1:] / error_upw[:-1]) / - np.log(2))
+    roc_lxf = np.mean(np.log(error_lxf[1:] / error_lxf[:-1]) / - np.log(2))
+    roc_lxw = np.mean(np.log(error_lxw[1:] / error_lxw[:-1]) / - np.log(2))
+    roc_god = np.mean(np.log(error_god[1:] / error_god[:-1]) / - np.log(2))
+        
     plt.figure()
     plt.axis('equal')
     plt.loglog(np.divide(1,N),error_upw,'o-')
     plt.loglog(np.divide(1,N),error_lxf,'o-')
     plt.loglog(np.divide(1,N),error_lxw,'o-')
     plt.loglog(np.divide(1,N), error_god, 'o-')
-    plt.legend(["UW","LF","LW","God"])
+    plt.legend(["UW, a = {:.2f}".format(roc_upw),
+                "LF, a = {:.2f}".format(roc_lxf),
+                "LW, a = {:.2f}".format(roc_lxw),
+                "God, a = {:.2f}".format(roc_god)], loc = 2)
     plt.ylabel("Error")
     plt.xlabel("h")
+    
     if T == 0.5:
         if norm == 1:
             plt.title("Error in 1-norm")
@@ -204,7 +214,7 @@ def Error_verification(T, norm):
         elif norm == np.inf:
             plt.title("Error in inf-norm")
             plt.savefig("Error_cont_inf.pdf")
-     
-            
+
+
 Error_verification(0.5, 1)
 #BL_solution('high', 1)

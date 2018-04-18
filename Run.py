@@ -41,7 +41,7 @@ def BL_solution(method, T):
         # Discontinuous solution:
         if T == 0.5:
             u0 = np.zeros(len(x))
-            u0[x<=0] = 1.0
+            u0[x<=0] = 1
             
         # Continuous initial:
         elif T == 1:
@@ -124,7 +124,7 @@ def Error_verification(T, norm):
     # Solutions on coarser grids
     N = np.array([2**i for i in range(3,11)])
 
-
+    # Initiate vectors to store errors
     error_upw = np.zeros(len(N))
     error_lxf = np.zeros(len(N))
     error_lxw = np.zeros(len(N))
@@ -149,7 +149,8 @@ def Error_verification(T, norm):
             u0_g = np.ones(len(xg))*analytical(1,T)
             u0[x<=0] = 1.0
             u0_g[xg<=0] = 1.0
-            
+        
+        # Compute solutions, and then omit the fictitious nodes.
         uu = upw(u0, 0.995, dX, T, flux, df, inflow)
         uu = uu[1:-1]
         uf = lxf(u0, 0.995, dX, T, flux, df, inflow)
@@ -169,10 +170,10 @@ def Error_verification(T, norm):
         # to create a piecewise continuous linear reconstruction of the solution.
         # To do this, we use the vector phi and then create the reconstruction.
         ug_c = [ug[i]+0.5*(((2*j+1)-int(dX/dx)))/int(dX/dx)*phi[i] for i in range(len(ug)) for j in range(int(dX/dx))]
-        error_upw[j] = np.power(dX,1/norm)*np.linalg.norm(uu_c - uref,norm)
-        error_lxf[j] = np.power(dX,1/norm)*np.linalg.norm(uf_c - uref,norm)
-        error_lxw[j] = np.power(dX,1/norm)*np.linalg.norm(uw_c - uref,norm)
-        error_god[j] = np.power(dX,1/norm)*np.linalg.norm(ug_c - uref,norm)
+        error_upw[j] = np.power(dx,1/norm)*np.linalg.norm(uu_c - uref,norm)
+        error_lxf[j] = np.power(dx,1/norm)*np.linalg.norm(uf_c - uref,norm)
+        error_lxw[j] = np.power(dx,1/norm)*np.linalg.norm(uw_c - uref,norm)
+        error_god[j] = np.power(dx,1/norm)*np.linalg.norm(ug_c - uref,norm)
         j += 1
             
     #Rates of convergence estimates
@@ -190,7 +191,7 @@ def Error_verification(T, norm):
     plt.legend(["UW, a = {:.2f}".format(roc_upw),
                 "LF, a = {:.2f}".format(roc_lxf),
                 "LW, a = {:.2f}".format(roc_lxw),
-                "God, a = {:.2f}".format(roc_god)], loc = 2)
+                "God, a = {:.2f}".format(roc_god)], loc = int(2/T))
     plt.ylabel("Error")
     plt.xlabel("h")
     
@@ -216,5 +217,5 @@ def Error_verification(T, norm):
             plt.savefig("Error_cont_inf.pdf")
 
 
-#Error_verification(0.5, 1)
-BL_solution('high', 0.5)
+Error_verification(1, 1)
+#BL_solution('high', 0.5)

@@ -72,12 +72,13 @@ def BL_solution(method, T):
         plt.plot(xr, analytical(xr,T), color = 'red')
         plt.plot(x[1:-1], uw[1:-1],'.', markersize = 3)
         plt.title("Lax-Wendroff")
-        
+        # The following commented out section saves the plots
+        """
         if T == 1:
             plt.savefig("solution_classical_cont.pdf")
         elif T == 0.5:
             plt.savefig("solution_classical_discont.pdf")
-   
+        """
     
     elif method == 'high':
         # Coarser grid, need two fictitious nodes at each end for this scheme.
@@ -101,16 +102,18 @@ def BL_solution(method, T):
         plt.plot(xr, analytical(xr, T), color = 'red')
         plt.plot(xh[2:-2], ug[2:-2], '.', markersize = 3)
         plt.title("Godunov")
+        # The following commented out section saves the plots
+        """
         if T == 0.5:
             plt.savefig("solution_high_discont.pdf")
         elif T == 1:
             plt.savefig("solution_high_cont.pdf")
-
+        """
 
 def Error_verification(T, norm):
 
     # Derivative of flux for BL:
-    s = np.linspace(0,1,501)
+    s = np.linspace(0,1,1001)
     dfv = max(np.diff(flux(s))/np.diff(s))
     df = lambda u: np.zeros(len(u)) + dfv
     
@@ -177,11 +180,11 @@ def Error_verification(T, norm):
         j += 1
             
     #Rates of convergence estimates
-    roc_upw = np.mean(np.log(error_upw[1:] / error_upw[:-1]) / - np.log(2))
-    roc_lxf = np.mean(np.log(error_lxf[1:] / error_lxf[:-1]) / - np.log(2))
-    roc_lxw = np.mean(np.log(error_lxw[1:] / error_lxw[:-1]) / - np.log(2))
-    roc_god = np.mean(np.log(error_god[1:] / error_god[:-1]) / - np.log(2))
-        
+    roc_upw = np.mean(np.log(np.divide(error_upw[1:], error_upw[:-1])) / - np.log(2))
+    roc_lxf = np.mean(np.log(np.divide(error_lxf[1:], error_lxf[:-1])) / - np.log(2))
+    roc_lxw = np.mean(np.log(np.divide(error_lxw[1:], error_lxw[:-1])) / - np.log(2))
+    roc_god = np.mean(np.log(np.divide(error_god[1:], error_god[:-1])) / - np.log(2))
+    
     plt.figure()
     plt.axis('equal')
     plt.loglog(np.divide(1,N),error_upw,'o-')
@@ -198,24 +201,24 @@ def Error_verification(T, norm):
     if T == 0.5:
         if norm == 1:
             plt.title("Error in 1-norm")
-            plt.savefig("Error_disc1.pdf")
+            #plt.savefig("Error_disc1.pdf")
         elif norm == 2:
             plt.title("Error in 2-norm")
-            plt.savefig("Error_disc2.pdf")
+            #plt.savefig("Error_disc2.pdf")
         elif norm == np.inf:
             plt.title("Error in inf-norm")
-            plt.savefig("Error_disc_inf.pdf")
+            #plt.savefig("Error_disc_inf.pdf")
     elif T == 1:
         if norm == 1:
             plt.title("Error in 1-norm")
-            plt.savefig("Error_cont1.pdf")
+            #plt.savefig("Error_cont1.pdf")
         elif norm == 2:
             plt.title("Error in 2-norm")
-            plt.savefig("Error_cont2.pdf")
+            #plt.savefig("Error_cont2.pdf")
         elif norm == np.inf:
             plt.title("Error in inf-norm")
-            plt.savefig("Error_cont_inf.pdf")
+            #plt.savefig("Error_cont_inf.pdf")
 
 
-Error_verification(1, 1)
-#BL_solution('high', 0.5)
+Error_verification(0.5,2)
+BL_solution('classical', 1)
